@@ -55,14 +55,14 @@ A plataforma precisa suportar venda e check-in com desempenho consistente e segu
 ## Observabilidade
 - Logs estruturados com `trace_id`.
 - Métricas de API, checkout, pagamento, emissão e check-in.
-- Tracing básico entre módulos internos e integrações externas.
+- Application Insights + Log Analytics para monitoramento operacional.
 - Alertas para falhas críticas e degradação de latência.
 
 ## Alertas Operacionais de Referência
 - API p95 acima de `400ms` por 10 min.
 - Check-in p95 acima de `300ms` por 10 min.
 - Taxa de erro 5xx acima de `1%` por 5 min.
-- Falha de webhook ou fila acumulada acima do limite operacional definido.
+- Falha de webhook acima do limite operacional definido.
 
 ## Continuidade de Negócio
 - `RTO 2h`: recuperar serviço em até 2 horas.
@@ -80,6 +80,7 @@ A plataforma precisa suportar venda e check-in com desempenho consistente e segu
 - Integrações externas podem impactar SLO sem controle total interno.
 
 ## Changelog
+- `v2.0.0` - 2026-02-14 - Alinhamento de observabilidade para Application Insights + Log Analytics.
 - `v1.2.0` - 2026-02-14 - Inclusão de meta de conciliação financeira diária.
 - `v1.1.0` - 2026-02-14 - Inclusão de SLI formais e alertas de referência.
 - `v1.0.0` - 2026-02-14 - Versão inicial.

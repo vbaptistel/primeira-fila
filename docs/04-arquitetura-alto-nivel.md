@@ -4,12 +4,12 @@
 Definir a arquitetura técnica do MVP, com fronteiras claras entre módulos e integrações externas.
 
 ## Contexto
-A prioridade do MVP é velocidade de entrega com confiabilidade operacional. A escolha técnica base é monólito modular.
+A prioridade do MVP é velocidade de entrega com confiabilidade operacional. A escolha técnica base é monólito modular com fluxos síncronos.
 
 ## Decisões Fechadas
 - Estilo: monólito modular.
 - Interface backend: REST/JSON.
-- Assincronia seletiva para tarefas não bloqueantes (fila).
+- Processamento interno: síncrono (sem fila interna nesta fase).
 - Persistência inicial: PostgreSQL único.
 - Isolamento de organizadores por `tenant_id`.
 - Integrações externas obrigatórias: gateway de pagamento e e-mail transacional.
@@ -29,14 +29,15 @@ A prioridade do MVP é velocidade de entrega com confiabilidade operacional. A e
 - `Payments`: cobrança, webhook, conciliação.
 - `Ticketing`: emissão de QR e estado de ingresso.
 - `CheckIn`: validação de QR e prevenção de reuso.
-- `Notifications`: envio de e-mail e retentativas.
+- `Notifications`: envio de e-mail transacional.
 - `Backoffice`: operação de organizer admin e platform admin.
 - `AuditCompliance`: trilha de auditoria e suporte a LGPD.
 
 ## Visão de Componentes
 ```mermaid
 flowchart TD
-  FE[Web Responsivo] --> API[REST API /v1]
+  FE1[web-customer] --> API[REST API /v1]
+  FE2[web-backoffice] --> API
   API --> IA[IdentityAccess]
   API --> TB[TenancyBranding]
   API --> CAT[Catalog]
@@ -48,22 +49,14 @@ flowchart TD
   API --> BO[Backoffice]
   API --> AUD[AuditCompliance]
   PAY --> PG[Gateway de Pagamento]
-  TIC --> Q[Queue]
-  PAY --> Q
-  Q --> NTF[Notifications]
-  NTF --> ESP[Serviço de E-mail]
-  API --> DB[(PostgreSQL)]
+  API --> ESP[Serviço de E-mail]
+  API --> DB[(PostgreSQL 18)]
 ```
 
 ## Fluxos Transacionais Críticos
 - Reserva de assento (`hold`) e criação de pedido devem ocorrer em transação consistente.
 - Confirmação de pagamento e conversão de inventário para `sold` devem ser atômicas.
 - Emissão de ticket deve ocorrer após confirmação de pagamento persistida.
-
-## Assincronia e Entrega
-- Fila usada para envio de e-mail e tarefas de retentativa.
-- Semântica mínima: entrega ao menos uma vez com consumidores idempotentes.
-- Falha de worker não pode perder evento crítico (pagamento, emissão, notificação).
 
 ## Dados e Persistência
 - Banco relacional único no MVP.
@@ -74,17 +67,18 @@ flowchart TD
 - JWT para autenticação.
 - RBAC por papel: `platform_admin`, `organizer_admin`, `operator`, `buyer`.
 - TLS em trânsito e criptografia de dados sensíveis em repouso.
-- Logs estruturados com `trace_id`, métricas e tracing básico.
+- Logs estruturados com `trace_id` e monitoramento em Application Insights.
 
 ## Regras e Critérios de Aceite
 - Fronteiras de módulo devem reduzir acoplamento entre domínios.
-- Integrações externas devem suportar retentativa e idempotência.
+- Integrações externas devem suportar idempotência e tratamento de erro explícito.
 - Arquitetura deve comportar piloto sem depender de microserviços.
 
 ## Riscos e Limitações
 - Monólito modular requer disciplina para manter limites de domínio.
-- Eventual escala alta pode exigir extração gradual de módulos.
+- Processamento totalmente síncrono pode elevar latência em integrações externas.
 
 ## Changelog
+- `v2.0.0` - 2026-02-14 - Ajuste para modelo síncrono sem fila interna e visão com dois frontends.
 - `v1.1.0` - 2026-02-14 - Regras finas de consistência transacional e assíncrona.
 - `v1.0.0` - 2026-02-14 - Versão inicial.

@@ -28,30 +28,41 @@ Roadmap planejado para 12 semanas, com piloto controlado e cadência semanal de 
 - JWT + RBAC.
 - Cadastro de `Event`, `EventDay`, `Session`.
 - Mapa de assentos e inventário por sessão.
+- Setup da estrutura separada `backend/` e `frontend/`.
+- Setup das aplicações frontend (`web-customer`, `web-backoffice`) em Next.js.
+- Setup do backend único para API.
+- Setup do pacote compartilhado exclusivo de frontend (`frontend/packages/shared`).
+- Definição e adoção da stack oficial (Documento 11).
 
 ### Critérios de Aceite
 - Isolamento por tenant validado.
 - Publicação de sessão funcional.
 - Auditoria mínima ativa para catálogo.
+- Pipeline CI com lint, typecheck e testes unitários ativo nas aplicações iniciais.
+- Testes de arquitetura ativos para validar fronteiras entre módulos.
+- Validação automática impedindo import cruzado entre `backend/` e `frontend/`.
 
-## Fase 2 (Semanas 4-6) - Venda
+## Fase 2 (Semanas 4-6) - Venda e Infra de Produção
 ### Entregas
 - Hold com TTL de 10 minutos.
 - Criação de pedido e checkout.
 - Integração com gateway único.
 - Webhook idempotente.
 - Snapshot de política comercial no pedido (taxa e versão da política).
+- Provisionamento Azure backend (`App Service`, `ACR`, `PostgreSQL`, `Application Insights`).
+- Pipeline de deploy em slot (`staging` -> `production`) com rollback manual.
 
 ### Critérios de Aceite
 - Fluxo `Hold -> Order -> Payment` estável.
 - Zero duplicidade financeira em cenários de teste.
 - Expiração consistente de hold e pedido (`expired`).
 - Cálculo de total do comprador e composição de taxa aderentes à política ativa do tenant.
+- Deploy backend concluído com smoke test e swap por slot.
 
 ## Fase 3 (Semanas 7-9) - Operação de Evento
 ### Entregas
 - Emissão de ticket QR.
-- E-mail transacional com retentativas.
+- E-mail transacional.
 - Check-in online com bloqueio de reuso.
 - Reembolso manual auditável.
 - Aplicação da matriz de reembolso por janela e motivo.
@@ -87,7 +98,7 @@ Roadmap planejado para 12 semanas, com piloto controlado e cadência semanal de 
 
 ## Riscos e Mitigações
 - Concorrência de assentos: testes de carga e validação transacional.
-- Instabilidade do gateway: idempotência, retentativas e conciliação.
+- Instabilidade do gateway: idempotência e conciliação.
 - Falha de entrega de e-mail: fallback no portal.
 - Erro operacional em check-in: treinamento e auditoria.
 
@@ -96,6 +107,10 @@ Roadmap planejado para 12 semanas, com piloto controlado e cadência semanal de 
 - Confiabilidade operacional comprovada antes de ampliação de escala.
 
 ## Changelog
+- `v2.0.0` - 2026-02-14 - Alinhamento com backend síncrono e fase dedicada para deploy Azure do backend.
+- `v1.5.0` - 2026-02-14 - Ajuste de entregáveis para backend único e duas aplicações frontend Next.js com pacote compartilhado exclusivo.
+- `v1.4.0` - 2026-02-14 - Inclusão explícita de outbox/DLQ e testes de arquitetura no roadmap.
+- `v1.3.0` - 2026-02-14 - Inclusão de entregáveis técnicos (stack, apps e CI) na Fase 1.
 - `v1.2.0` - 2026-02-14 - Inclusão dos critérios de política comercial nas fases de venda, operação e go-live.
 - `v1.1.0` - 2026-02-14 - Critérios globais de go-live, ajuste fino de fases e política de rollout/rollback.
 - `v1.0.0` - 2026-02-14 - Versão inicial.

@@ -11,7 +11,7 @@ As jornadas cobrem compra, pagamento, emissão de ticket, check-in e reembolso m
 - Cobertura de exceções: extensa.
 - Check-in offline: fora do MVP.
 - Timeout de pagamento pendente: pedido expira (`expired`) e hold é liberado.
-- Falha de envio de e-mail: retentativas automáticas + ticket disponível no portal.
+- Falha de envio de e-mail: ticket permanece disponível no portal e suporte executa reenvio manual.
 - Reembolso manual segue matriz temporal e motivos definidos no Documento 9.
 
 ## Jornada 1 - Compra e Reserva de Inventário
@@ -80,7 +80,7 @@ Ticket válido entregue por portal e, quando possível, por e-mail.
 
 ### Exceções
 - Falha temporária no serviço de e-mail.
-- Retentativas falham e suporte precisa atuar.
+- Reenvio manual necessário pelo suporte/backoffice.
 - Tentativa de emissão duplicada para o mesmo item pago.
 
 ## Jornada 4 - Check-in
@@ -206,6 +206,7 @@ sequenceDiagram
 - Cancelamento por timeout pode elevar tickets de suporte financeiro.
 
 ## Changelog
+- `v1.3.0` - 2026-02-14 - Ajuste de emissão para cenário sem retentativa assíncrona interna de e-mail.
 - `v1.2.0` - 2026-02-14 - Alinhamento de jornada de reembolso à matriz comercial e motivos padronizados.
 - `v1.1.0` - 2026-02-14 - Alinhamento fino de timeout para `expired` e tratamento de aprovação tardia.
 - `v1.0.0` - 2026-02-14 - Versão inicial.
