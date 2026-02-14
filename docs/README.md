@@ -60,6 +60,7 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 - Integrações externas podem exigir refinamentos de contrato.
 
 ## Changelog
+- `v3.8.0` - 2026-02-14 - Avanço da Sprint 04 com conclusão da `TASK-010` (integração de pagamento no backend com idempotência e confirmação síncrona aprovado/negado).
 - `v3.7.0` - 2026-02-14 - Avanço da Sprint 04 com conclusão da `TASK-009` (criação de pedido com idempotência e snapshot financeiro no backend).
 - `v3.6.0` - 2026-02-14 - Avanço da Sprint 04 com conclusão da `TASK-008` (hold de assentos com TTL de 10 minutos e expiração síncrona no backend).
 - `v3.5.0` - 2026-02-14 - Avanço da Sprint 03 com conclusão da `TASK-007` (mapa de assentos por sessão e endpoint público de assentos).

@@ -140,8 +140,15 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 ### Iniciar Pagamento
 `POST /v1/orders/{order_id}/payments`
 - Idempotência: obrigatória.
-- Entrada: método e dados do gateway.
-- Saída: `payment_id`, `status`.
+- Header obrigatório: `Idempotency-Key: <uuid>`.
+- Entrada:
+  - `method`: `PIX | CREDIT_CARD | DEBIT_CARD`
+  - `gateway` (opcional): identificador do provider (`mock_gateway` por padrão no MVP técnico)
+  - `cardToken` (obrigatório para `CREDIT_CARD` e `DEBIT_CARD`)
+- Saída:
+  - `payment_id`
+  - `status`: `approved | denied`
+  - `order.status`: atualizado para `paid` quando aprovado
 
 ### Validar QR
 `POST /v1/checkins/validate-qr`
@@ -189,6 +196,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.9.0` - 2026-02-14 - Contrato de `POST /v1/orders/{order_id}/payments` detalhado com `Idempotency-Key`, método de pagamento e regra de confirmação síncrona aprovado/negado no MVP.
 - `v1.8.0` - 2026-02-14 - Refinamento do contrato de `POST /v1/orders` com header obrigatório `Idempotency-Key`, payload de comprador e resposta com snapshot financeiro do pedido.
 - `v1.7.0` - 2026-02-14 - Contrato de `POST /v1/sessions/{session_id}/holds` refinado para payload por assento, TTL de 10 minutos e sem quota genérica no MVP.
 - `v1.6.0` - 2026-02-14 - Inclusão dos endpoints administrativos de `SessionSeat` no catálogo por sessão.

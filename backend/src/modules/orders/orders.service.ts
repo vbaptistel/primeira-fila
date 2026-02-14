@@ -8,6 +8,7 @@ import {
 import {
   EventStatus,
   OrderStatus,
+  PaymentStatus,
   Prisma,
   SessionHoldStatus,
   SessionSeatStatus,
@@ -16,6 +17,8 @@ import {
 import { createHash } from "node:crypto";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
+import { CreateOrderPaymentDto } from "./dto/create-order-payment.dto";
+import { PaymentGatewayService } from "./payment-gateway.service";
 
 const DEFAULT_COMMERCIAL_POLICY_VERSION = "platform_default_v1";
 const DEFAULT_SERVICE_FEE_PERCENT = 0.1;
@@ -25,7 +28,10 @@ const IDEMPOTENCY_KEY_PATTERN =
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly paymentGatewayService: PaymentGatewayService
+  ) {}
 
   async createOrder(idempotencyKeyHeader: string | undefined, dto: CreateOrderDto) {
     const idempotencyKey = this.normalizeIdempotencyKey(idempotencyKeyHeader);
@@ -194,6 +200,158 @@ export class OrdersService {
     }
   }
 
+  async createOrderPayment(
+    orderId: string,
+    idempotencyKeyHeader: string | undefined,
+    dto: CreateOrderPaymentDto
+  ) {
+    const idempotencyKey = this.normalizeIdempotencyKey(idempotencyKeyHeader);
+    const requestHash = this.buildRequestHash({
+      orderId,
+      gateway: dto.gateway,
+      method: dto.method,
+      cardToken: dto.cardToken
+    });
+
+    const existingByIdempotency = await this.findPaymentByIdempotencyKey(idempotencyKey);
+    if (existingByIdempotency) {
+      if (existingByIdempotency.requestHash !== requestHash) {
+        throw new ConflictException("Idempotency-Key ja utilizada com payload diferente.");
+      }
+
+      return existingByIdempotency;
+    }
+
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const order = await tx.order.findUnique({
+            where: {
+              id: orderId
+            },
+            include: {
+              items: {
+                orderBy: {
+                  createdAt: "asc"
+                }
+              }
+            }
+          });
+
+          if (!order) {
+            throw new NotFoundException("Pedido nao encontrado.");
+          }
+
+          await this.expireOrderIfNeeded(tx, order);
+
+          if (order.status !== OrderStatus.PENDING_PAYMENT) {
+            throw new ConflictException("Pedido nao aceita novo pagamento.");
+          }
+
+          const gatewayResult = await this.paymentGatewayService.charge({
+            provider: dto.gateway,
+            method: dto.method,
+            cardToken: dto.cardToken,
+            amountCents: order.totalAmountCents,
+            currencyCode: order.currencyCode,
+            orderId: order.id
+          });
+
+          const payment = await tx.payment.create({
+            data: {
+              tenantId: order.tenantId,
+              orderId: order.id,
+              idempotencyKey,
+              requestHash,
+              provider: gatewayResult.provider,
+              providerPaymentId: gatewayResult.providerPaymentId,
+              method: dto.method,
+              status: gatewayResult.status,
+              amountCents: order.totalAmountCents,
+              currencyCode: order.currencyCode,
+              providerPayload: gatewayResult.providerPayload as Prisma.InputJsonValue,
+              approvedAt: gatewayResult.status === PaymentStatus.APPROVED ? new Date() : undefined,
+              deniedAt: gatewayResult.status === PaymentStatus.DENIED ? new Date() : undefined
+            }
+          });
+
+          if (gatewayResult.status === PaymentStatus.APPROVED) {
+            await tx.order.update({
+              where: {
+                id: order.id
+              },
+              data: {
+                status: OrderStatus.PAID
+              }
+            });
+
+            await tx.sessionHold.updateMany({
+              where: {
+                id: order.holdId,
+                status: SessionHoldStatus.ACTIVE
+              },
+              data: {
+                status: SessionHoldStatus.CONSUMED
+              }
+            });
+
+            await tx.sessionSeat.updateMany({
+              where: {
+                id: {
+                  in: order.items.map((item) => item.seatId)
+                },
+                sessionId: order.sessionId,
+                status: SessionSeatStatus.HELD
+              },
+              data: {
+                status: SessionSeatStatus.SOLD
+              }
+            });
+          }
+
+          return tx.payment.findUnique({
+            where: {
+              id: payment.id
+            },
+            include: {
+              order: {
+                include: {
+                  items: {
+                    orderBy: {
+                      createdAt: "asc"
+                    }
+                  }
+                }
+              }
+            }
+          });
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable
+        }
+      );
+    } catch (error) {
+      if (this.isPrismaErrorCode(error, "P2002")) {
+        const existing = await this.findPaymentByIdempotencyKey(idempotencyKey);
+        if (existing) {
+          if (existing.requestHash !== requestHash) {
+            throw new ConflictException("Idempotency-Key ja utilizada com payload diferente.");
+          }
+
+          return existing;
+        }
+
+        throw new ConflictException("Conflito ao registrar pagamento.");
+      }
+
+      if (this.isPrismaErrorCode(error, "P2034")) {
+        throw new ConflictException("Conflito de concorrencia ao registrar pagamento.");
+      }
+
+      throw error;
+    }
+  }
+
   private async findOrderByIdempotencyKey(idempotencyKey: string) {
     return this.prisma.order.findUnique({
       where: {
@@ -203,6 +361,25 @@ export class OrdersService {
         items: {
           orderBy: {
             createdAt: "asc"
+          }
+        }
+      }
+    });
+  }
+
+  private async findPaymentByIdempotencyKey(idempotencyKey: string) {
+    return this.prisma.payment.findUnique({
+      where: {
+        idempotencyKey
+      },
+      include: {
+        order: {
+          include: {
+            items: {
+              orderBy: {
+                createdAt: "asc"
+              }
+            }
           }
         }
       }
@@ -257,6 +434,67 @@ export class OrdersService {
     throw new GoneException("Hold expirada.");
   }
 
+  private async expireOrderIfNeeded(
+    tx: Prisma.TransactionClient,
+    order: {
+      id: string;
+      holdId: string;
+      sessionId: string;
+      status: OrderStatus;
+      holdExpiresAt: Date;
+    }
+  ) {
+    if (order.status !== OrderStatus.PENDING_PAYMENT) {
+      return;
+    }
+
+    if (order.holdExpiresAt > new Date()) {
+      return;
+    }
+
+    await tx.order.updateMany({
+      where: {
+        id: order.id,
+        status: OrderStatus.PENDING_PAYMENT
+      },
+      data: {
+        status: OrderStatus.EXPIRED
+      }
+    });
+
+    await tx.sessionHold.updateMany({
+      where: {
+        id: order.holdId,
+        status: SessionHoldStatus.ACTIVE
+      },
+      data: {
+        status: SessionHoldStatus.EXPIRED
+      }
+    });
+
+    await tx.sessionSeat.updateMany({
+      where: {
+        sessionId: order.sessionId,
+        status: SessionSeatStatus.HELD,
+        holdSeats: {
+          some: {
+            holdId: order.holdId
+          },
+          none: {
+            hold: {
+              status: SessionHoldStatus.ACTIVE
+            }
+          }
+        }
+      },
+      data: {
+        status: SessionSeatStatus.AVAILABLE
+      }
+    });
+
+    throw new GoneException("Pedido expirado para pagamento.");
+  }
+
   private normalizeIdempotencyKey(idempotencyKeyHeader: string | undefined): string {
     const normalized = idempotencyKeyHeader?.trim();
 
@@ -271,9 +509,9 @@ export class OrdersService {
     return normalized.toLowerCase();
   }
 
-  private buildRequestHash(dto: CreateOrderDto): string {
-    const payload = this.stableStringify(dto);
-    return createHash("sha256").update(payload).digest("hex");
+  private buildRequestHash(payload: unknown): string {
+    const normalized = this.stableStringify(payload);
+    return createHash("sha256").update(normalized).digest("hex");
   }
 
   private stableStringify(value: unknown): string {

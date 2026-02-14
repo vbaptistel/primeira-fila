@@ -24,7 +24,7 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-007` | `US-007` | Backend | Criar módulo de mapa de assentos por sessão. | Assentos criados com unicidade por `setor+fileira+número`. | `TASK-006` | `CONCLUIDA` |
 | `TASK-008` | `US-002` | Backend | Implementar hold de assento com TTL de 10 minutos. | Hold criado e expirado corretamente. | `TASK-007` | `CONCLUIDA` |
 | `TASK-009` | `US-003` | Backend | Implementar criação de pedido com idempotência. | Pedido não duplica com mesma chave idempotente. | `TASK-008` | `CONCLUIDA` |
-| `TASK-010` | `US-003` | Backend | Integrar gateway de pagamento (criação e confirmação). | Fluxo de pagamento aprovado/negado funcional. | `TASK-009` | `TODO` |
+| `TASK-010` | `US-003` | Backend | Integrar gateway de pagamento (criação e confirmação). | Fluxo de pagamento aprovado/negado funcional. | `TASK-009` | `CONCLUIDA` |
 | `TASK-011` | `US-003` | Backend | Implementar webhook idempotente do gateway. | Eventos duplicados não geram inconsistência. | `TASK-010` | `TODO` |
 | `TASK-012` | `US-004` | Backend | Implementar emissão de ticket QR após pagamento aprovado. | Ticket `valid` criado somente após pagamento confirmado. | `TASK-010` | `TODO` |
 | `TASK-013` | `US-004` | Backend | Criar endpoint de consulta de tickets por pedido. | Buyer acessa apenas tickets permitidos por escopo. | `TASK-012` | `TODO` |
@@ -105,6 +105,7 @@ Cadência sugerida: sprints de 2 semanas.
 - Dependências externas podem deslocar tasks críticas de infraestrutura e integração.
 
 ## Changelog
+- `v1.17.0` - 2026-02-14 - `TASK-010` concluída com endpoint `POST /v1/orders/{order_id}/payments`, idempotência por `Idempotency-Key`, persistência de `Payment` e atualização transacional de `Order/Hold/SessionSeat` para cenários aprovado/negado.
 - `v1.16.0` - 2026-02-14 - `TASK-009` concluída com endpoint `POST /v1/orders`, validação de `Idempotency-Key`, conversão de `hold` em pedido `pending_payment` e persistência de itens financeiros.
 - `v1.15.0` - 2026-02-14 - `TASK-008` concluída com endpoint público de hold, expiração síncrona de TTL (10 min) e liberação automática de assentos expirados.
 - `v1.14.0` - 2026-02-14 - `TASK-007` concluída com `SessionSeat` por sessão, unicidade por `setor+fileira+número` e endpoint público `/v1/sessions/{session_id}/seats`.

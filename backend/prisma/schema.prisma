@@ -46,6 +46,20 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  DENIED
+  REFUNDED
+  ERROR
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+}
+
 model Event {
   id          String      @id @default(uuid()) @db.Uuid
   tenantId    String      @map("tenant_id") @db.Uuid
@@ -177,6 +191,7 @@ model Order {
   holdExpiresAt           DateTime    @map("hold_expires_at") @db.Timestamptz(6)
   session                 Session     @relation(fields: [sessionId], references: [id], onDelete: Restrict)
   hold                    SessionHold @relation(fields: [holdId], references: [id], onDelete: Restrict)
+  payments                Payment[]
   items                   OrderItem[]
   createdAt               DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -184,6 +199,30 @@ model Order {
   @@index([tenantId, status])
   @@index([sessionId, status])
   @@map("orders")
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  tenantId          String        @map("tenant_id") @db.Uuid
+  orderId           String        @map("order_id") @db.Uuid
+  idempotencyKey    String        @unique @map("idempotency_key") @db.VarChar(64)
+  requestHash       String        @map("request_hash") @db.VarChar(64)
+  provider          String        @default("mock_gateway") @db.VarChar(40)
+  providerPaymentId String        @unique @map("provider_payment_id") @db.VarChar(80)
+  method            PaymentMethod
+  status            PaymentStatus @default(PENDING)
+  amountCents       Int           @map("amount_cents")
+  currencyCode      String        @map("currency_code") @db.VarChar(3)
+  providerPayload   Json?         @map("provider_payload")
+  approvedAt        DateTime?     @map("approved_at") @db.Timestamptz(6)
+  deniedAt          DateTime?     @map("denied_at") @db.Timestamptz(6)
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId, orderId, status])
+  @@index([orderId, status])
+  @@map("payments")
 }
 
 model OrderItem {
