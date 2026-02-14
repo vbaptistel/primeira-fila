@@ -60,6 +60,7 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 - Integrações externas podem exigir refinamentos de contrato.
 
 ## Changelog
+- `v2.6.0` - 2026-02-14 - Fechamento da Fase 1 com validação de deploy frontend na Vercel e status de sprint atualizado.
 - `v2.5.0` - 2026-02-14 - Ajuste de estratégia de deploy frontend: Vercel nativa sem workflows de deploy no GitHub Actions.
 - `v2.4.0` - 2026-02-14 - Início da implementação da Fase 1 no código com monorepo base, pacote compartilhado frontend e validação de fronteiras.
 - `v2.3.0` - 2026-02-14 - Definição da ordem de execução das tasks por fases e sprints no Documento 16.

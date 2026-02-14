@@ -62,8 +62,8 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-045` | `US-013` | CI/CD | Adicionar smoke test antes do swap. | Pipeline bloqueia swap se smoke test falhar. | `TASK-044` | `TODO` |
 | `TASK-046` | `US-013` | Operação | Documentar procedimento de swap para produção. | Runbook de deploy validado em simulação. | `TASK-045` | `TODO` |
 | `TASK-047` | `US-013` | Operação | Documentar rollback por swap reverso manual. | Rollback testado e registrado em checklist. | `TASK-046` | `TODO` |
-| `TASK-048` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-customer` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-002` | `EM_ANDAMENTO` |
-| `TASK-049` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-backoffice` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-003` | `EM_ANDAMENTO` |
+| `TASK-048` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-customer` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-002` | `CONCLUIDA` |
+| `TASK-049` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-backoffice` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-003` | `CONCLUIDA` |
 | `TASK-050` | `US-013` | Segurança | Configurar OIDC GitHub -> Azure com RBAC mínimo. | Pipeline sem secret estático para deploy no Azure. | `TASK-039`,`TASK-040` | `TODO` |
 | `TASK-051` | `US-015` | Qualidade | Criar testes de arquitetura para bloquear import cruzado. | Teste automatizado falha em import proibido. | `TASK-005` | `CONCLUIDA` |
 | `TASK-052` | `US-003` | Qualidade | Criar testes de integração de idempotência de pagamento. | Cenários duplicados não quebram consistência. | `TASK-010`,`TASK-011` | `TODO` |
@@ -105,6 +105,7 @@ Cadência sugerida: sprints de 2 semanas.
 - Dependências externas podem deslocar tasks críticas de infraestrutura e integração.
 
 ## Changelog
+- `v1.4.0` - 2026-02-14 - Fase 1 finalizada com deploy Vercel validado para `web-customer` e `web-backoffice`.
 - `v1.3.0` - 2026-02-14 - Ajuste da estratégia de deploy frontend para Vercel nativa, sem workflows de deploy no GitHub Actions.
 - `v1.2.0` - 2026-02-14 - Atualização de status da Fase 1 com fundação concluída e deploy frontend em andamento.
 - `v1.1.0` - 2026-02-14 - Inclusão do sequenciamento por fases e sprints com ordem de execução.
