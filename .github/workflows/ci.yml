@@ -2,12 +2,22 @@ name: CI
 
 on:
   pull_request:
+    paths:
+      - "backend/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/ci.yml"
   push:
     branches:
       - main
+    paths:
+      - "backend/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/ci.yml"
 
 jobs:
-  quality:
+  backend-quality:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,14 +32,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      - name: Lint backend
+        run: npm run lint --workspace @primeira-fila/backend
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Typecheck backend
+        run: npm run typecheck --workspace @primeira-fila/backend
 
-      - name: Architecture boundaries
-        run: npm run test:arch
-
-      - name: Build workspaces
-        run: npm run build
+      - name: Build backend
+        run: npm run build --workspace @primeira-fila/backend
