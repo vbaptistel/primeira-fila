@@ -9,8 +9,8 @@
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "prisma:generate": "NODE_PATH=../node_modules prisma generate --schema prisma/schema.prisma",
-    "db:push": "NODE_PATH=../node_modules prisma db push --schema prisma/schema.prisma"
+    "prisma:generate": "mkdir -p node_modules/@prisma && ln -sf ../../../node_modules/@prisma/client node_modules/@prisma/client && PRISMA_GENERATE_SKIP_AUTOINSTALL=1 NODE_PATH=../node_modules prisma generate --schema prisma/schema.prisma",
+    "db:push": "NODE_PATH=../node_modules prisma db push --schema prisma/schema.prisma --skip-generate"
   },
   "dependencies": {
     "@fastify/static": "^9.0.0",

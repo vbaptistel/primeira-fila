@@ -39,6 +39,13 @@ enum SessionHoldStatus {
   CANCELLED
 }
 
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
 model Event {
   id          String      @id @default(uuid()) @db.Uuid
   tenantId    String      @map("tenant_id") @db.Uuid
@@ -91,6 +98,8 @@ model Session {
   event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventDay      EventDay      @relation(fields: [eventDayId, eventId], references: [id, eventId], onDelete: Cascade)
   holds         SessionHold[]
+  orders        Order[]
+  orderItems    OrderItem[]
   sessionSeats  SessionSeat[]
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -111,6 +120,7 @@ model SessionSeat {
   status     SessionSeatStatus @default(AVAILABLE)
   session    Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   holdSeats  SessionHoldSeat[]
+  orderItems OrderItem[]
   createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -127,6 +137,7 @@ model SessionHold {
   expiresAt   DateTime          @map("expires_at") @db.Timestamptz(6)
   session     Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   heldSeats   SessionHoldSeat[]
+  order       Order?
   createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -145,4 +156,49 @@ model SessionHoldSeat {
   @@unique([holdId, seatId])
   @@index([seatId])
   @@map("session_hold_seats")
+}
+
+model Order {
+  id                      String      @id @default(uuid()) @db.Uuid
+  tenantId                String      @map("tenant_id") @db.Uuid
+  sessionId               String      @map("session_id") @db.Uuid
+  holdId                  String      @unique @map("hold_id") @db.Uuid
+  idempotencyKey          String      @unique @map("idempotency_key") @db.VarChar(64)
+  requestHash             String      @map("request_hash") @db.VarChar(64)
+  status                  OrderStatus @default(PENDING_PAYMENT)
+  buyerName               String      @map("buyer_name") @db.VarChar(160)
+  buyerEmail              String      @map("buyer_email") @db.VarChar(180)
+  buyerDocument           String?     @map("buyer_document") @db.VarChar(32)
+  currencyCode            String      @default("BRL") @map("currency_code") @db.VarChar(3)
+  ticketSubtotalCents     Int         @map("ticket_subtotal_cents")
+  serviceFeeCents         Int         @map("service_fee_cents")
+  totalAmountCents        Int         @map("total_amount_cents")
+  commercialPolicyVersion String      @default("platform_default_v1") @map("commercial_policy_version") @db.VarChar(80)
+  holdExpiresAt           DateTime    @map("hold_expires_at") @db.Timestamptz(6)
+  session                 Session     @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  hold                    SessionHold @relation(fields: [holdId], references: [id], onDelete: Restrict)
+  items                   OrderItem[]
+  createdAt               DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId, status])
+  @@index([sessionId, status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  orderId        String   @map("order_id") @db.Uuid
+  sessionId      String   @map("session_id") @db.Uuid
+  seatId         String   @map("seat_id") @db.Uuid
+  unitPriceCents Int      @map("unit_price_cents")
+  currencyCode   String   @map("currency_code") @db.VarChar(3)
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  session        Session  @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  seat           SessionSeat @relation(fields: [seatId], references: [id], onDelete: Restrict)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([orderId, seatId])
+  @@index([sessionId, seatId])
+  @@map("order_items")
 }

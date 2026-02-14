@@ -130,8 +130,12 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 ### Criar Pedido
 `POST /v1/orders`
 - Idempotência: obrigatória.
-- Entrada: `hold_id`, dados de comprador, resumo financeiro.
-- Saída: `order_id`, `status=pending_payment`, snapshot financeiro (`ticket_subtotal`, `service_fee`, `total_amount`, `commercial_policy_version`).
+- Header obrigatório: `Idempotency-Key: <uuid>`.
+- Entrada: `hold_id` e dados do comprador (`buyer.name`, `buyer.email`, `buyer.document?`).
+- Saída: `order_id`, `status=pending_payment`, `hold_expires_at`, itens do pedido e snapshot financeiro (`ticket_subtotal`, `service_fee`, `total_amount`, `commercial_policy_version`).
+- Regras de idempotência:
+  - mesma chave + mesmo payload: retorna pedido originalmente persistido.
+  - mesma chave + payload diferente: retorna `409 CONFLICT`.
 
 ### Iniciar Pagamento
 `POST /v1/orders/{order_id}/payments`
@@ -185,6 +189,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.8.0` - 2026-02-14 - Refinamento do contrato de `POST /v1/orders` com header obrigatório `Idempotency-Key`, payload de comprador e resposta com snapshot financeiro do pedido.
 - `v1.7.0` - 2026-02-14 - Contrato de `POST /v1/sessions/{session_id}/holds` refinado para payload por assento, TTL de 10 minutos e sem quota genérica no MVP.
 - `v1.6.0` - 2026-02-14 - Inclusão dos endpoints administrativos de `SessionSeat` no catálogo por sessão.
 - `v1.5.0` - 2026-02-14 - Inclusão dos endpoints de catálogo de organizador (`Event`, `EventDay`, `Session`) no contrato v1.

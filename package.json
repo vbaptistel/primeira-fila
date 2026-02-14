@@ -21,6 +21,7 @@
     "ci": "npm run lint && npm run typecheck && npm run test:arch && npm run build"
   },
   "devDependencies": {
-    "eslint": "^9.39.2"
+    "eslint": "^9.39.2",
+    "prisma": "^6.16.2"
   }
 }
