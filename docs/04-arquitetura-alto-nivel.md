@@ -9,7 +9,7 @@ A prioridade do MVP é velocidade de entrega com confiabilidade operacional. A e
 ## Decisões Fechadas
 - Estilo: monólito modular.
 - Interface backend: REST/JSON.
-- Processamento interno: síncrono (sem fila interna nesta fase).
+- Processamento interno: síncrono em todas as operações nesta fase.
 - Persistência inicial: PostgreSQL único.
 - Isolamento de organizadores por `tenant_id`.
 - Integrações externas obrigatórias: gateway de pagamento e e-mail transacional.
@@ -79,6 +79,6 @@ flowchart TD
 - Processamento totalmente síncrono pode elevar latência em integrações externas.
 
 ## Changelog
-- `v2.0.0` - 2026-02-14 - Ajuste para modelo síncrono sem fila interna e visão com dois frontends.
-- `v1.1.0` - 2026-02-14 - Regras finas de consistência transacional e assíncrona.
+- `v2.0.0` - 2026-02-14 - Ajuste para modelo síncrono com visão de dois frontends.
+- `v1.1.0` - 2026-02-14 - Regras finas de consistência transacional.
 - `v1.0.0` - 2026-02-14 - Versão inicial.

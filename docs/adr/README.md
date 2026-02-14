@@ -24,4 +24,5 @@ Registrar decisões arquiteturais estruturais de forma rastreável, com contexto
 Use `docs/adr/0000-template.md` como base obrigatória.
 
 ## Changelog
+- `v1.1.0` - 2026-02-14 - Revisão textual para remover exemplos antigos não utilizados.
 - `v1.0.0` - 2026-02-14 - Estrutura inicial de ADR.

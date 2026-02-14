@@ -83,7 +83,8 @@ Com backend e frontend separados no mesmo repositório, regras de engenharia sã
 - PRs grandes reduzem qualidade de revisão e aumentam risco de regressão.
 
 ## Changelog
-- `v2.0.0` - 2026-02-14 - Remoção de dependências de outbox/DLQ e alinhamento com backend síncrono + deploy Azure/Vercel.
+- `v2.1.0` - 2026-02-14 - Remoção de menções a componentes de execução paralela na política de qualidade.
+- `v2.0.0` - 2026-02-14 - Alinhamento com backend síncrono + deploy Azure/Vercel.
 - `v1.2.0` - 2026-02-14 - Ajuste de cobertura e critérios para separação backend/frontend.
-- `v1.1.0` - 2026-02-14 - Inclusão de testes de arquitetura e validação obrigatória de outbox/DLQ.
+- `v1.1.0` - 2026-02-14 - Inclusão de testes de arquitetura e validações de consistência transacional.
 - `v1.0.0` - 2026-02-14 - Definição inicial dos padrões de engenharia e qualidade.

@@ -206,7 +206,8 @@ sequenceDiagram
 - Cancelamento por timeout pode elevar tickets de suporte financeiro.
 
 ## Changelog
-- `v1.3.0` - 2026-02-14 - Ajuste de emissão para cenário sem retentativa assíncrona interna de e-mail.
+- `v1.4.0` - 2026-02-14 - Remoção de menções a execução paralela em envio de e-mail.
+- `v1.3.0` - 2026-02-14 - Ajuste de emissão para cenário sem reexecução automática de e-mail.
 - `v1.2.0` - 2026-02-14 - Alinhamento de jornada de reembolso à matriz comercial e motivos padronizados.
 - `v1.1.0` - 2026-02-14 - Alinhamento fino de timeout para `expired` e tratamento de aprovação tardia.
 - `v1.0.0` - 2026-02-14 - Versão inicial.

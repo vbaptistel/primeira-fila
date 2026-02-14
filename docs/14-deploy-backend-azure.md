@@ -4,7 +4,7 @@
 Definir arquitetura, pipeline e runbook de deploy do backend na Azure para o MVP.
 
 ## Contexto
-Backend único em container Docker, sem processamento assíncrono interno nesta fase, com publicação em ambiente Azure e rollback por slot swap manual.
+Backend único em container Docker, com processamento totalmente síncrono nesta fase, publicação em ambiente Azure e rollback por slot swap manual.
 
 ## Decisões Fechadas
 - Plataforma: Azure App Service Linux (container custom).

@@ -22,7 +22,7 @@ As escolhas abaixo priorizam velocidade de entrega com segurança operacional e 
 - Contratos de API: OpenAPI (Swagger).
 - Autenticação: JWT (access + refresh).
 - Autorização: RBAC por tenant.
-- Processamento assíncrono interno: fora de escopo no momento.
+- Processamento interno: síncrono.
 
 ## Stack Frontend
 - Framework: Next.js 16 (App Router) + React 19.
@@ -68,10 +68,11 @@ As escolhas abaixo priorizam velocidade de entrega com segurança operacional e 
 - Backend e frontend devem compilar, testar e lintar de forma independente em CI.
 
 ## Riscos e Limitações
-- Sem camada assíncrona interna, operações demoradas devem ser tratadas com timeout e fallback controlado.
+- Operações demoradas devem ser tratadas com timeout e fallback controlado.
 - Evolução de framework exige controle de breaking changes com janela de rollout.
 
 ## Changelog
-- `v2.0.0` - 2026-02-14 - Alinhamento com stack final: PostgreSQL 18, Next.js 16, shadcn/ui, backend sem assíncrono interno e deploy Azure/Vercel.
+- `v2.1.0` - 2026-02-14 - Remoção de menções a componentes de execução paralela no backend.
+- `v2.0.0` - 2026-02-14 - Alinhamento com stack final: PostgreSQL 18, Next.js 16, shadcn/ui e deploy Azure/Vercel.
 - `v1.1.0` - 2026-02-14 - Ajuste para backend único, dois frontends Next.js e fronteira rígida sem compartilhamento de código.
 - `v1.0.0` - 2026-02-14 - Definição inicial da stack técnica oficial.

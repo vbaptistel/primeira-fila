@@ -80,6 +80,6 @@ docs/
 - Falta de contrato OpenAPI bem versionado pode quebrar integração sem compartilhamento de código.
 
 ## Changelog
-- `v2.0.0` - 2026-02-14 - Ajuste para backend único sem camada assíncrona interna e estrutura final de frontend compartilhado.
+- `v2.0.0` - 2026-02-14 - Ajuste para backend único em modo síncrono e estrutura final de frontend compartilhado.
 - `v1.1.0` - 2026-02-14 - Separação backend/frontend com backend único e pacote compartilhado exclusivo de frontend.
 - `v1.0.0` - 2026-02-14 - Definição inicial da divisão de aplicações e monorepo.

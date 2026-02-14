@@ -21,6 +21,8 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 12. `docs/12-divisao-aplicacoes-monorepo.md`
 13. `docs/13-padroes-engenharia-qualidade.md`
 14. `docs/14-deploy-backend-azure.md`
+15. `docs/15-estorias-mvp.md`
+16. `docs/16-tasks-implementacao-mvp.md`
 
 ## Complementos Técnicos
 - ADRs: `docs/adr/README.md`
@@ -40,6 +42,7 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 - Regras de taxas, reembolso e repasse devem seguir o Documento 9.
 - Tenant sem política customizada deve operar com `platform_default_v1`.
 - Escolhas de stack e organização de código devem seguir os Documentos 10 a 14.
+- Estórias e backlog de execução devem seguir os Documentos 15 e 16.
 - Backend e frontend devem permanecer separados, sem compartilhamento de código-fonte entre eles.
 
 ## Fluxo de Revisão
@@ -57,9 +60,11 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 - Integrações externas podem exigir refinamentos de contrato.
 
 ## Changelog
-- `v2.0.0` - 2026-02-14 - Alinhamento final de stack (backend/frontend), remoção de assíncrono interno e inclusão do padrão de deploy Azure.
+- `v2.3.0` - 2026-02-14 - Definição da ordem de execução das tasks por fases e sprints no Documento 16.
+- `v2.2.0` - 2026-02-14 - Inclusão das estórias do MVP e backlog de tasks com coluna de status.
+- `v2.1.0` - 2026-02-14 - Remoção completa de menções a execução paralela na documentação técnica.
+- `v2.0.0` - 2026-02-14 - Alinhamento final de stack (backend/frontend) e inclusão do padrão de deploy Azure.
 - `v1.6.0` - 2026-02-14 - Separação explícita backend/frontend e restrição de compartilhamento de código.
-- `v1.5.0` - 2026-02-14 - Implementação executável do padrão interno (outbox/DLQ/contratos) e estrutura de ADR.
 - `v1.4.0` - 2026-02-14 - Inclusão da trilha de documentação técnica (arquitetura, stack, apps e qualidade).
 - `v1.3.0` - 2026-02-14 - Inclusão de regra global para fallback de política comercial default.
 - `v1.2.0` - 2026-02-14 - Inclusão de políticas comerciais e financeiras como documento dedicado.

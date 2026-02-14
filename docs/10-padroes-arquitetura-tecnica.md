@@ -4,7 +4,7 @@
 Definir padrões obrigatórios de arquitetura para manter consistência, evolutividade e operação confiável do produto.
 
 ## Contexto
-O produto seguirá monólito modular no MVP, com separação clara de domínio e sem camada assíncrona interna nesta fase.
+O produto seguirá monólito modular no MVP, com separação clara de domínio e processamento interno totalmente síncrono.
 
 ## Decisões Fechadas
 - Estilo: monólito modular com fronteiras internas explícitas.
@@ -13,7 +13,6 @@ O produto seguirá monólito modular no MVP, com separação clara de domínio e
 - Integração entre módulos: contratos internos síncronos.
 - Acesso entre módulos: proibido acesso direto a dados de outro módulo.
 - Fronteira transacional: uma transação por caso de uso crítico.
-- Sem outbox, DLQ e workers internos nesta fase.
 - Mudanças arquiteturais estruturais exigem ADR.
 
 ## Padrões Obrigatórios por Módulo
@@ -45,7 +44,6 @@ O produto seguirá monólito modular no MVP, com separação clara de domínio e
 
 ## Padrões de Comunicação
 - Síncrono (REST + contratos internos): fluxo principal de negócio (checkout, check-in, consulta de pedidos, emissão e reembolso).
-- Eventos assíncronos internos: fora de escopo no momento.
 
 ## Padrão Transacional
 - Operações críticas usam transação de banco com escopo mínimo.
@@ -59,10 +57,10 @@ O produto seguirá monólito modular no MVP, com separação clara de domínio e
 
 ## Gestão de Evolução Arquitetural
 - Todo desvio de padrão deve ter ADR aprovada por engenharia.
-- Critérios para introdução futura de assíncrono:
+- Critérios para revisão de arquitetura:
   - gargalo comprovado de latência por operação;
-  - necessidade de retentativa desacoplada por integração externa;
-  - requisito de throughput que não caiba no fluxo síncrono.
+  - necessidade de escalar módulo de forma isolada;
+  - acoplamento impedindo evolução segura.
 
 ## ADR (Architecture Decision Record)
 - Local: `docs/adr/`.
@@ -90,7 +88,7 @@ O produto seguirá monólito modular no MVP, com separação clara de domínio e
 - Cada módulo deve respeitar camadas e regras de dependência.
 - Não pode haver acesso cruzado não autorizado a dados de outro módulo.
 - Toda decisão arquitetural relevante deve ter ADR.
-- Operações críticas devem permanecer consistentes sem depender de processamento assíncrono interno.
+- Operações críticas devem permanecer consistentes no fluxo síncrono.
 
 ## Assunções e Defaults
 - Banco de dados único PostgreSQL 18 no MVP.
@@ -99,9 +97,10 @@ O produto seguirá monólito modular no MVP, com separação clara de domínio e
 
 ## Riscos e Limitações
 - Operações externas lentas podem elevar latência no modelo síncrono.
-- Sem fila interna, retentativas de integração ficam restritas ao próprio request e/ou operação manual.
+- Integrações externas com instabilidade exigem estratégia operacional de contingência.
 
 ## Changelog
-- `v2.0.0` - 2026-02-14 - Ajuste para arquitetura síncrona sem outbox/DLQ no estágio atual.
-- `v1.1.0` - 2026-02-14 - Especificação executável de contratos internos, outbox/DLQ, retry e testes arquiteturais.
+- `v2.1.0` - 2026-02-14 - Remoção de menções a processamento paralelo interno.
+- `v2.0.0` - 2026-02-14 - Ajuste para arquitetura síncrona no estágio atual.
+- `v1.1.0` - 2026-02-14 - Especificação executável de contratos internos e testes arquiteturais.
 - `v1.0.0` - 2026-02-14 - Definição inicial dos padrões arquiteturais técnicos.

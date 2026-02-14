@@ -107,9 +107,9 @@ Roadmap planejado para 12 semanas, com piloto controlado e cadência semanal de 
 - Confiabilidade operacional comprovada antes de ampliação de escala.
 
 ## Changelog
+- `v2.1.0` - 2026-02-14 - Remoção de referências antigas a processamento paralelo.
 - `v2.0.0` - 2026-02-14 - Alinhamento com backend síncrono e fase dedicada para deploy Azure do backend.
 - `v1.5.0` - 2026-02-14 - Ajuste de entregáveis para backend único e duas aplicações frontend Next.js com pacote compartilhado exclusivo.
-- `v1.4.0` - 2026-02-14 - Inclusão explícita de outbox/DLQ e testes de arquitetura no roadmap.
 - `v1.3.0` - 2026-02-14 - Inclusão de entregáveis técnicos (stack, apps e CI) na Fase 1.
 - `v1.2.0` - 2026-02-14 - Inclusão dos critérios de política comercial nas fases de venda, operação e go-live.
 - `v1.1.0` - 2026-02-14 - Critérios globais de go-live, ajuste fino de fases e política de rollout/rollback.
