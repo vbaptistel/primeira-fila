@@ -122,8 +122,10 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 
 ### Criar Hold
 `POST /v1/sessions/{session_id}/holds`
-- Entrada: assentos (`sector`, `row`, `number`) ou quantidade de quota.
-- Saída: `hold_id`, `expires_at`, itens reservados.
+- Entrada: lista de assentos (`sector`, `row`, `number`).
+- Janela de hold: 10 minutos a partir da criação.
+- Saída: `hold_id`, `expires_at`, status do hold e itens reservados.
+- Observação do MVP: hold por quantidade (sem assento) não está habilitado nesta fase.
 
 ### Criar Pedido
 `POST /v1/orders`
@@ -183,6 +185,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.7.0` - 2026-02-14 - Contrato de `POST /v1/sessions/{session_id}/holds` refinado para payload por assento, TTL de 10 minutos e sem quota genérica no MVP.
 - `v1.6.0` - 2026-02-14 - Inclusão dos endpoints administrativos de `SessionSeat` no catálogo por sessão.
 - `v1.5.0` - 2026-02-14 - Inclusão dos endpoints de catálogo de organizador (`Event`, `EventDay`, `Session`) no contrato v1.
 - `v1.4.0` - 2026-02-14 - Alinhamento de autenticação para Supabase Auth como provider de identidade.

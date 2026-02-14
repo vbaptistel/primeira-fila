@@ -5,9 +5,17 @@ import {
   NotFoundException
 } from "@nestjs/common";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
-import { EventDayStatus, EventStatus, SessionSeatStatus, SessionStatus } from "@prisma/client";
+import {
+  EventDayStatus,
+  EventStatus,
+  Prisma,
+  SessionHoldStatus,
+  SessionSeatStatus,
+  SessionStatus
+} from "@prisma/client";
 import { CreateEventDayDto } from "./dto/create-event-day.dto";
 import { CreateEventDto } from "./dto/create-event.dto";
+import { CreateHoldDto } from "./dto/create-hold.dto";
 import { CreateSessionDto } from "./dto/create-session.dto";
 import { CreateSessionSeatDto } from "./dto/create-session-seat.dto";
 import { UpdateEventDayDto } from "./dto/update-event-day.dto";
@@ -21,6 +29,14 @@ type SessionTimeline = {
   salesStartsAt?: Date;
   salesEndsAt?: Date;
 };
+
+type RequestedSeat = {
+  sector: string;
+  row: string;
+  number: number;
+};
+
+const HOLD_TTL_MINUTES = 10;
 
 @Injectable()
 export class EventsService {
@@ -333,6 +349,7 @@ export class EventsService {
     sessionId: string
   ) {
     await this.getSession(tenantId, eventId, eventDayId, sessionId);
+    await this.expireSessionHolds(sessionId);
 
     return this.prisma.sessionSeat.findMany({
       where: {
@@ -472,6 +489,136 @@ export class EventsService {
     return event;
   }
 
+  async createSessionHold(sessionId: string, dto: CreateHoldDto) {
+    const requestedSeats = this.normalizeRequestedSeats(dto);
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + HOLD_TTL_MINUTES * 60 * 1000);
+
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const session = await tx.session.findFirst({
+            where: {
+              id: sessionId,
+              status: SessionStatus.PUBLISHED,
+              event: {
+                status: {
+                  not: EventStatus.ARCHIVED
+                }
+              }
+            },
+            select: {
+              id: true,
+              tenantId: true
+            }
+          });
+
+          if (!session) {
+            throw new NotFoundException("Sessao nao encontrada ou indisponivel para publicacao.");
+          }
+
+          await this.expireSessionHoldsInTx(tx, sessionId, now);
+
+          const seatScope = requestedSeats.map((seat) => ({
+            sectorCode: seat.sector,
+            rowLabel: seat.row,
+            seatNumber: seat.number
+          }));
+
+          const seats = await tx.sessionSeat.findMany({
+            where: {
+              sessionId,
+              OR: seatScope
+            }
+          });
+
+          const seatByKey = new Map(
+            seats.map((seat) => [
+              this.buildSeatKey(seat.sectorCode, seat.rowLabel, seat.seatNumber),
+              seat
+            ])
+          );
+
+          const resolvedSeats = requestedSeats.map((requestedSeat) => {
+            const key = this.buildSeatKey(requestedSeat.sector, requestedSeat.row, requestedSeat.number);
+            const seat = seatByKey.get(key);
+
+            if (!seat) {
+              throw new ConflictException(
+                `Assento ${this.describeSeat(requestedSeat.sector, requestedSeat.row, requestedSeat.number)} nao existe nesta sessao.`
+              );
+            }
+
+            return seat;
+          });
+
+          const unavailableSeat = resolvedSeats.find(
+            (seat) => seat.status !== SessionSeatStatus.AVAILABLE
+          );
+          if (unavailableSeat) {
+            throw new ConflictException(
+              `Assento ${this.describeSeat(unavailableSeat.sectorCode, unavailableSeat.rowLabel, unavailableSeat.seatNumber)} nao esta disponivel para hold.`
+            );
+          }
+
+          const hold = await tx.sessionHold.create({
+            data: {
+              tenantId: session.tenantId,
+              sessionId,
+              status: SessionHoldStatus.ACTIVE,
+              expiresAt
+            }
+          });
+
+          await tx.sessionHoldSeat.createMany({
+            data: resolvedSeats.map((seat) => ({
+              holdId: hold.id,
+              seatId: seat.id
+            }))
+          });
+
+          const updatedSeats = await tx.sessionSeat.updateMany({
+            where: {
+              id: {
+                in: resolvedSeats.map((seat) => seat.id)
+              },
+              status: SessionSeatStatus.AVAILABLE
+            },
+            data: {
+              status: SessionSeatStatus.HELD
+            }
+          });
+
+          if (updatedSeats.count !== resolvedSeats.length) {
+            throw new ConflictException("Conflito de concorrencia ao reservar assentos.");
+          }
+
+          return {
+            holdId: hold.id,
+            sessionId: hold.sessionId,
+            status: hold.status,
+            expiresAt: hold.expiresAt,
+            seats: resolvedSeats.map((seat) => ({
+              seatId: seat.id,
+              sectorCode: seat.sectorCode,
+              rowLabel: seat.rowLabel,
+              seatNumber: seat.seatNumber
+            }))
+          };
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable
+        }
+      );
+    } catch (error) {
+      if (this.isPrismaErrorCode(error, "P2034")) {
+        throw new ConflictException("Conflito de concorrencia ao reservar assentos.");
+      }
+
+      throw error;
+    }
+  }
+
   async getPublicSessionSeats(sessionId: string) {
     const session = await this.prisma.session.findFirst({
       where: {
@@ -488,6 +635,8 @@ export class EventsService {
     if (!session) {
       throw new NotFoundException("Sessao nao encontrada ou indisponivel para publicacao.");
     }
+
+    await this.expireSessionHolds(sessionId);
 
     return this.prisma.sessionSeat.findMany({
       where: {
@@ -602,6 +751,116 @@ export class EventsService {
     ) {
       throw new BadRequestException("Fim de vendas deve ser posterior ao inicio de vendas.");
     }
+  }
+
+  private normalizeRequestedSeats(dto: CreateHoldDto): RequestedSeat[] {
+    const seatsByKey = new Map<string, RequestedSeat>();
+
+    for (const seat of dto.seats) {
+      const normalizedSeat = {
+        sector: seat.sector.trim().toUpperCase(),
+        row: seat.row.trim().toUpperCase(),
+        number: seat.number
+      };
+      const key = this.buildSeatKey(normalizedSeat.sector, normalizedSeat.row, normalizedSeat.number);
+
+      if (seatsByKey.has(key)) {
+        throw new BadRequestException(
+          `Assento duplicado no payload: ${this.describeSeat(normalizedSeat.sector, normalizedSeat.row, normalizedSeat.number)}.`
+        );
+      }
+
+      seatsByKey.set(key, normalizedSeat);
+    }
+
+    return Array.from(seatsByKey.values());
+  }
+
+  private async expireSessionHolds(sessionId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.expireSessionHoldsInTx(tx, sessionId, new Date());
+    });
+  }
+
+  private async expireSessionHoldsInTx(
+    tx: Prisma.TransactionClient,
+    sessionId: string,
+    now: Date
+  ): Promise<void> {
+    const expiredHolds = await tx.sessionHold.findMany({
+      where: {
+        sessionId,
+        status: SessionHoldStatus.ACTIVE,
+        expiresAt: {
+          lte: now
+        }
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!expiredHolds.length) {
+      return;
+    }
+
+    const holdIds = expiredHolds.map((hold) => hold.id);
+
+    await tx.sessionHold.updateMany({
+      where: {
+        id: {
+          in: holdIds
+        },
+        status: SessionHoldStatus.ACTIVE
+      },
+      data: {
+        status: SessionHoldStatus.EXPIRED
+      }
+    });
+
+    const holdSeats = await tx.sessionHoldSeat.findMany({
+      where: {
+        holdId: {
+          in: holdIds
+        }
+      },
+      select: {
+        seatId: true
+      },
+      distinct: ["seatId"]
+    });
+
+    if (!holdSeats.length) {
+      return;
+    }
+
+    await tx.sessionSeat.updateMany({
+      where: {
+        id: {
+          in: holdSeats.map((holdSeat) => holdSeat.seatId)
+        },
+        sessionId,
+        status: SessionSeatStatus.HELD,
+        holdSeats: {
+          none: {
+            hold: {
+              status: SessionHoldStatus.ACTIVE
+            }
+          }
+        }
+      },
+      data: {
+        status: SessionSeatStatus.AVAILABLE
+      }
+    });
+  }
+
+  private buildSeatKey(sectorCode: string, rowLabel: string, seatNumber: number): string {
+    return `${sectorCode}::${rowLabel}::${seatNumber}`;
+  }
+
+  private describeSeat(sectorCode: string, rowLabel: string, seatNumber: number): string {
+    return `${sectorCode}-${rowLabel}-${seatNumber}`;
   }
 
   private normalizeLimit(limit: number): number {

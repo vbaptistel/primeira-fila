@@ -22,7 +22,7 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-005` | `US-014` | Qualidade | Configurar regra para bloquear import cruzado backend/frontend. | CI falha em import cruzado proibido. | `TASK-001` | `CONCLUIDA` |
 | `TASK-006` | `US-006` | Backend | Criar módulo de eventos (`Event`, `EventDay`, `Session`). | CRUD básico funcional com validações. | `TASK-001` | `CONCLUIDA` |
 | `TASK-007` | `US-007` | Backend | Criar módulo de mapa de assentos por sessão. | Assentos criados com unicidade por `setor+fileira+número`. | `TASK-006` | `CONCLUIDA` |
-| `TASK-008` | `US-002` | Backend | Implementar hold de assento com TTL de 10 minutos. | Hold criado e expirado corretamente. | `TASK-007` | `TODO` |
+| `TASK-008` | `US-002` | Backend | Implementar hold de assento com TTL de 10 minutos. | Hold criado e expirado corretamente. | `TASK-007` | `CONCLUIDA` |
 | `TASK-009` | `US-003` | Backend | Implementar criação de pedido com idempotência. | Pedido não duplica com mesma chave idempotente. | `TASK-008` | `TODO` |
 | `TASK-010` | `US-003` | Backend | Integrar gateway de pagamento (criação e confirmação). | Fluxo de pagamento aprovado/negado funcional. | `TASK-009` | `TODO` |
 | `TASK-011` | `US-003` | Backend | Implementar webhook idempotente do gateway. | Eventos duplicados não geram inconsistência. | `TASK-010` | `TODO` |
@@ -105,6 +105,7 @@ Cadência sugerida: sprints de 2 semanas.
 - Dependências externas podem deslocar tasks críticas de infraestrutura e integração.
 
 ## Changelog
+- `v1.15.0` - 2026-02-14 - `TASK-008` concluída com endpoint público de hold, expiração síncrona de TTL (10 min) e liberação automática de assentos expirados.
 - `v1.14.0` - 2026-02-14 - `TASK-007` concluída com `SessionSeat` por sessão, unicidade por `setor+fileira+número` e endpoint público `/v1/sessions/{session_id}/seats`.
 - `v1.13.0` - 2026-02-14 - Hardening adicional da `TASK-042`: padrão automático de segurança para novas tabelas no Supabase validado em ambiente provisionado.
 - `v1.12.0` - 2026-02-14 - `TASK-006` concluída com módulo de catálogo no backend (CRUD de `Event`, `EventDay` e `Session`) e validações de escopo/data.

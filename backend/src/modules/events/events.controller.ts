@@ -16,6 +16,7 @@ import {
 import { ApiTags } from "@nestjs/swagger";
 import { CreateEventDayDto } from "./dto/create-event-day.dto";
 import { CreateEventDto } from "./dto/create-event.dto";
+import { CreateHoldDto } from "./dto/create-hold.dto";
 import { CreateSessionDto } from "./dto/create-session.dto";
 import { CreateSessionSeatDto } from "./dto/create-session-seat.dto";
 import { UpdateEventDayDto } from "./dto/update-event-day.dto";
@@ -234,6 +235,14 @@ export class EventsPublicController {
 @Controller("sessions")
 export class SessionsPublicController {
   constructor(private readonly eventsService: EventsService) {}
+
+  @Post(":sessionId/holds")
+  createHold(
+    @Param("sessionId", ParseUUIDPipe) sessionId: string,
+    @Body() dto: CreateHoldDto
+  ) {
+    return this.eventsService.createSessionHold(sessionId, dto);
+  }
 
   @Get(":sessionId/seats")
   getPublicSessionSeats(@Param("sessionId", ParseUUIDPipe) sessionId: string) {

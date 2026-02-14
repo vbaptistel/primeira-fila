@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum EventStatus {
@@ -29,6 +30,13 @@ enum SessionSeatStatus {
   HELD
   SOLD
   BLOCKED
+}
+
+enum SessionHoldStatus {
+  ACTIVE
+  EXPIRED
+  CONSUMED
+  CANCELLED
 }
 
 model Event {
@@ -82,6 +90,7 @@ model Session {
   status        SessionStatus @default(DRAFT)
   event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventDay      EventDay      @relation(fields: [eventDayId, eventId], references: [id, eventId], onDelete: Cascade)
+  holds         SessionHold[]
   sessionSeats  SessionSeat[]
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -101,10 +110,39 @@ model SessionSeat {
   seatNumber Int               @map("seat_number")
   status     SessionSeatStatus @default(AVAILABLE)
   session    Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  holdSeats  SessionHoldSeat[]
   createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@unique([sessionId, sectorCode, rowLabel, seatNumber])
   @@index([tenantId, sessionId, status])
   @@map("session_seats")
+}
+
+model SessionHold {
+  id          String            @id @default(uuid()) @db.Uuid
+  tenantId    String            @map("tenant_id") @db.Uuid
+  sessionId   String            @map("session_id") @db.Uuid
+  status      SessionHoldStatus @default(ACTIVE)
+  expiresAt   DateTime          @map("expires_at") @db.Timestamptz(6)
+  session     Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  heldSeats   SessionHoldSeat[]
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId, sessionId, status, expiresAt])
+  @@map("session_holds")
+}
+
+model SessionHoldSeat {
+  id         String      @id @default(uuid()) @db.Uuid
+  holdId     String      @map("hold_id") @db.Uuid
+  seatId     String      @map("seat_id") @db.Uuid
+  hold       SessionHold @relation(fields: [holdId], references: [id], onDelete: Cascade)
+  seat       SessionSeat @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([holdId, seatId])
+  @@index([seatId])
+  @@map("session_hold_seats")
 }
