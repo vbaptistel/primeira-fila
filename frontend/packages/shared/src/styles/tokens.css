@@ -1,0 +1,23 @@
+:root {
+  --pf-color-background: #f4f8f7;
+  --pf-color-surface: #ffffff;
+  --pf-color-text: #172421;
+  --pf-color-muted-text: #45635e;
+  --pf-color-primary: #0f766e;
+  --pf-color-primary-text: #f3fffd;
+  --pf-color-border: #c9ddd8;
+
+  --pf-radius-sm: 8px;
+  --pf-radius-md: 12px;
+  --pf-radius-lg: 18px;
+
+  --pf-space-1: 0.25rem;
+  --pf-space-2: 0.5rem;
+  --pf-space-3: 0.75rem;
+  --pf-space-4: 1rem;
+  --pf-space-5: 1.25rem;
+  --pf-space-6: 1.5rem;
+
+  --pf-font-sans: "Manrope", "Segoe UI", sans-serif;
+  --pf-font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+}

@@ -15,11 +15,11 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 ## Backlog de Tasks
 | Task ID | Estória | Área | Task | Critério de Conclusão | Dependências | Status |
 |---|---|---|---|---|---|---|
-| `TASK-001` | `US-014` | Estrutura | Criar estrutura base `backend/` e `frontend/`. | Estrutura de pastas criada conforme Documento 12. | - | `TODO` |
-| `TASK-002` | `US-014` | Estrutura | Criar `frontend/apps/web-customer`. | App inicia localmente em Next.js 16. | `TASK-001` | `TODO` |
-| `TASK-003` | `US-014` | Estrutura | Criar `frontend/apps/web-backoffice`. | App inicia localmente em Next.js 16. | `TASK-001` | `TODO` |
-| `TASK-004` | `US-014` | Estrutura | Criar `frontend/packages/shared` com setup inicial. | Package pode ser importado pelas duas apps frontend. | `TASK-001` | `TODO` |
-| `TASK-005` | `US-014` | Qualidade | Configurar regra para bloquear import cruzado backend/frontend. | CI falha em import cruzado proibido. | `TASK-001` | `TODO` |
+| `TASK-001` | `US-014` | Estrutura | Criar estrutura base `backend/` e `frontend/`. | Estrutura de pastas criada conforme Documento 12. | - | `CONCLUIDA` |
+| `TASK-002` | `US-014` | Estrutura | Criar `frontend/apps/web-customer`. | App inicia localmente em Next.js 16. | `TASK-001` | `CONCLUIDA` |
+| `TASK-003` | `US-014` | Estrutura | Criar `frontend/apps/web-backoffice`. | App inicia localmente em Next.js 16. | `TASK-001` | `CONCLUIDA` |
+| `TASK-004` | `US-014` | Estrutura | Criar `frontend/packages/shared` com setup inicial. | Package pode ser importado pelas duas apps frontend. | `TASK-001` | `CONCLUIDA` |
+| `TASK-005` | `US-014` | Qualidade | Configurar regra para bloquear import cruzado backend/frontend. | CI falha em import cruzado proibido. | `TASK-001` | `CONCLUIDA` |
 | `TASK-006` | `US-006` | Backend | Criar módulo de eventos (`Event`, `EventDay`, `Session`). | CRUD básico funcional com validações. | `TASK-001` | `TODO` |
 | `TASK-007` | `US-007` | Backend | Criar módulo de mapa de assentos por sessão. | Assentos criados com unicidade por `setor+fileira+número`. | `TASK-006` | `TODO` |
 | `TASK-008` | `US-002` | Backend | Implementar hold de assento com TTL de 10 minutos. | Hold criado e expirado corretamente. | `TASK-007` | `TODO` |
@@ -47,8 +47,8 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-030` | `US-008` | Frontend Backoffice | Criar tela de consulta de pedidos/pagamentos/ingressos. | Filtros por status/evento/sessão funcionam. | `TASK-003`,`TASK-013` | `TODO` |
 | `TASK-031` | `US-005` | Frontend Backoffice | Criar tela operacional de check-in por QR. | Operador valida ingresso e vê resultado em tempo real. | `TASK-014`,`TASK-026` | `TODO` |
 | `TASK-032` | `US-009` | Frontend Backoffice | Criar fluxo de reembolso manual. | Organizer Admin solicita reembolso com motivo obrigatório. | `TASK-019`,`TASK-026` | `TODO` |
-| `TASK-033` | `US-014` | Frontend Shared | Criar base de componentes `shadcn/ui` em `packages/shared`. | Componentes reutilizados pelas duas apps frontend. | `TASK-004` | `TODO` |
-| `TASK-034` | `US-014` | Frontend Shared | Criar tokens e tema visual compartilhados. | Tema aplicado de forma consistente em ambas as apps. | `TASK-033` | `TODO` |
+| `TASK-033` | `US-014` | Frontend Shared | Criar base de componentes `shadcn/ui` em `packages/shared`. | Componentes reutilizados pelas duas apps frontend. | `TASK-004` | `CONCLUIDA` |
+| `TASK-034` | `US-014` | Frontend Shared | Criar tokens e tema visual compartilhados. | Tema aplicado de forma consistente em ambas as apps. | `TASK-033` | `CONCLUIDA` |
 | `TASK-035` | `US-015` | Backend | Instrumentar logs estruturados com `trace_id`. | Logs possuem correlação de requisição ponta a ponta. | `TASK-001` | `TODO` |
 | `TASK-036` | `US-015` | Infra | Configurar Application Insights no backend Azure. | Telemetria de requisições e erros visível no portal Azure. | `TASK-050` | `TODO` |
 | `TASK-037` | `US-015` | Infra | Configurar Log Analytics e consultas base. | Queries operacionais disponíveis para suporte. | `TASK-036` | `TODO` |
@@ -62,10 +62,10 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-045` | `US-013` | CI/CD | Adicionar smoke test antes do swap. | Pipeline bloqueia swap se smoke test falhar. | `TASK-044` | `TODO` |
 | `TASK-046` | `US-013` | Operação | Documentar procedimento de swap para produção. | Runbook de deploy validado em simulação. | `TASK-045` | `TODO` |
 | `TASK-047` | `US-013` | Operação | Documentar rollback por swap reverso manual. | Rollback testado e registrado em checklist. | `TASK-046` | `TODO` |
-| `TASK-048` | `US-014` | CI/CD | Configurar pipeline frontend `web-customer` na Vercel. | Deploy automático em ambiente alvo funcional. | `TASK-002` | `TODO` |
-| `TASK-049` | `US-014` | CI/CD | Configurar pipeline frontend `web-backoffice` na Vercel. | Deploy automático em ambiente alvo funcional. | `TASK-003` | `TODO` |
+| `TASK-048` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-customer` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-002` | `EM_ANDAMENTO` |
+| `TASK-049` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-backoffice` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-003` | `EM_ANDAMENTO` |
 | `TASK-050` | `US-013` | Segurança | Configurar OIDC GitHub -> Azure com RBAC mínimo. | Pipeline sem secret estático para deploy no Azure. | `TASK-039`,`TASK-040` | `TODO` |
-| `TASK-051` | `US-015` | Qualidade | Criar testes de arquitetura para bloquear import cruzado. | Teste automatizado falha em import proibido. | `TASK-005` | `TODO` |
+| `TASK-051` | `US-015` | Qualidade | Criar testes de arquitetura para bloquear import cruzado. | Teste automatizado falha em import proibido. | `TASK-005` | `CONCLUIDA` |
 | `TASK-052` | `US-003` | Qualidade | Criar testes de integração de idempotência de pagamento. | Cenários duplicados não quebram consistência. | `TASK-010`,`TASK-011` | `TODO` |
 | `TASK-053` | `US-002` | Qualidade | Criar testes de concorrência de assentos. | Sem overbooking em cenários concorrentes críticos. | `TASK-008` | `TODO` |
 | `TASK-054` | `US-005` | Qualidade | Criar E2E de check-in com duplo uso de QR. | Primeiro uso aprovado; segundo uso negado. | `TASK-031` | `TODO` |
@@ -105,5 +105,7 @@ Cadência sugerida: sprints de 2 semanas.
 - Dependências externas podem deslocar tasks críticas de infraestrutura e integração.
 
 ## Changelog
+- `v1.3.0` - 2026-02-14 - Ajuste da estratégia de deploy frontend para Vercel nativa, sem workflows de deploy no GitHub Actions.
+- `v1.2.0` - 2026-02-14 - Atualização de status da Fase 1 com fundação concluída e deploy frontend em andamento.
 - `v1.1.0` - 2026-02-14 - Inclusão do sequenciamento por fases e sprints com ordem de execução.
 - `v1.0.0` - 2026-02-14 - Primeira versão do backlog de implementação com coluna de status.

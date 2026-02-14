@@ -1,0 +1,13 @@
+{
+  "name": "@primeira-fila/frontend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Workspace frontend com duas aplicacoes Next.js",
+  "scripts": {
+    "dev:web-customer": "npm run dev --workspace web-customer",
+    "dev:web-backoffice": "npm run dev --workspace web-backoffice",
+    "build": "npm run build --workspace web-customer && npm run build --workspace web-backoffice",
+    "lint": "npm run lint --workspace web-customer && npm run lint --workspace web-backoffice && npm run lint --workspace @primeira-fila/shared",
+    "typecheck": "npm run typecheck --workspace web-customer && npm run typecheck --workspace web-backoffice && npm run typecheck --workspace @primeira-fila/shared"
+  }
+}
