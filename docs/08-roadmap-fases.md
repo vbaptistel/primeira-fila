@@ -25,7 +25,7 @@ Roadmap planejado para 12 semanas, com piloto controlado e cadência semanal de 
 ## Fase 1 (Semanas 1-3) - Fundação
 ### Entregas
 - Multi-tenant por subdomínio.
-- JWT + RBAC.
+- Supabase Auth + RBAC.
 - Cadastro de `Event`, `EventDay`, `Session`.
 - Mapa de assentos e inventário por sessão.
 - Setup da estrutura separada `backend/` e `frontend/`.
@@ -49,15 +49,15 @@ Roadmap planejado para 12 semanas, com piloto controlado e cadência semanal de 
 - Integração com gateway único.
 - Webhook idempotente.
 - Snapshot de política comercial no pedido (taxa e versão da política).
-- Provisionamento Azure backend (`App Service`, `ACR`, `PostgreSQL`, `Application Insights`).
-- Pipeline de deploy em slot (`staging` -> `production`) com rollback manual.
+- Configuração do projeto backend na Vercel (`preview` + `production`) e variáveis de ambiente.
+- Pipeline nativo da Vercel para deploy automático em `main` com rollback por redeploy manual.
 
 ### Critérios de Aceite
 - Fluxo `Hold -> Order -> Payment` estável.
 - Zero duplicidade financeira em cenários de teste.
 - Expiração consistente de hold e pedido (`expired`).
 - Cálculo de total do comprador e composição de taxa aderentes à política ativa do tenant.
-- Deploy backend concluído com smoke test e swap por slot.
+- Deploy backend concluído na Vercel com smoke test e rollback validado por redeploy.
 
 ## Fase 3 (Semanas 7-9) - Operação de Evento
 ### Entregas
@@ -107,8 +107,10 @@ Roadmap planejado para 12 semanas, com piloto controlado e cadência semanal de 
 - Confiabilidade operacional comprovada antes de ampliação de escala.
 
 ## Changelog
+- `v2.3.0` - 2026-02-14 - Atualização da fundação para autenticação via Supabase Auth.
+- `v2.2.0` - 2026-02-14 - Ajuste da Fase 2 para estratégia de deploy backend em Vercel.
 - `v2.1.0` - 2026-02-14 - Remoção de referências antigas a processamento paralelo.
-- `v2.0.0` - 2026-02-14 - Alinhamento com backend síncrono e fase dedicada para deploy Azure do backend.
+- `v2.0.0` - 2026-02-14 - Alinhamento com backend síncrono e fase dedicada para deploy do backend.
 - `v1.5.0` - 2026-02-14 - Ajuste de entregáveis para backend único e duas aplicações frontend Next.js com pacote compartilhado exclusivo.
 - `v1.3.0` - 2026-02-14 - Inclusão de entregáveis técnicos (stack, apps e CI) na Fase 1.
 - `v1.2.0` - 2026-02-14 - Inclusão dos critérios de política comercial nas fases de venda, operação e go-live.

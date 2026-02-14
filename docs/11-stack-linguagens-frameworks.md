@@ -17,10 +17,10 @@ As escolhas abaixo priorizam velocidade de entrega com segurança operacional e 
 - Runtime: Node.js 22 LTS.
 - Framework HTTP: NestJS (adaptador Fastify).
 - ORM: Prisma ORM.
-- Banco relacional: PostgreSQL 18.
+- Banco relacional: PostgreSQL gerenciado no Supabase.
 - Validação: `class-validator` + `class-transformer`.
 - Contratos de API: OpenAPI (Swagger).
-- Autenticação: JWT (access + refresh).
+- Autenticação: Supabase Auth (access token JWT + refresh token).
 - Autorização: RBAC por tenant.
 - Processamento interno: síncrono.
 
@@ -30,7 +30,7 @@ As escolhas abaixo priorizam velocidade de entrega com segurança operacional e 
 - UI: `shadcn/ui` com base compartilhada em `frontend/packages/shared`.
 - Estado e dados: Server Components + TanStack Query + Zustand (mínimo).
 - Formulários e validação: React Hook Form + Zod.
-- Autenticação no cliente: sessão com cookie `HttpOnly` e renovação via backend.
+- Autenticação no cliente: sessão Supabase Auth com cookies seguros (`HttpOnly`) e renovação via provider.
 
 ## Contratos Backend-Frontend
 - Integração via HTTP/JSON e contrato OpenAPI publicado pelo backend.
@@ -47,16 +47,16 @@ As escolhas abaixo priorizam velocidade de entrega com segurança operacional e 
 
 ## Observabilidade e Operação
 - Logs estruturados em JSON.
-- Monitoramento backend: Application Insights + Log Analytics.
-- Dashboards operacionais: Azure Monitor Workbook + consultas no Log Analytics.
+- Monitoramento backend: Vercel Observability + dashboards operacionais.
+- Dashboards operacionais: erro 5xx, latência p95, disponibilidade e falhas de integração.
 - Correlação de requisições por `trace_id`.
 
 ## Deploy
 ### Backend
-- Build: Docker multi-stage.
-- CI/CD: GitHub Actions.
-- Plataforma: Azure App Service (Linux, container).
-- Registry: Azure Container Registry (ACR).
+- Build: `npm run build` do workspace backend.
+- CI: GitHub Actions apenas para qualidade de código.
+- Deploy: integração nativa da Vercel.
+- Plataforma: Vercel.
 
 ### Frontend
 - Plataforma: Vercel.
@@ -72,7 +72,9 @@ As escolhas abaixo priorizam velocidade de entrega com segurança operacional e 
 - Evolução de framework exige controle de breaking changes com janela de rollout.
 
 ## Changelog
+- `v2.3.0` - 2026-02-14 - Definição do Supabase Auth como provider oficial de autenticação.
+- `v2.2.0` - 2026-02-14 - Definição do banco oficial como PostgreSQL gerenciado no Supabase.
 - `v2.1.0` - 2026-02-14 - Remoção de menções a componentes de execução paralela no backend.
-- `v2.0.0` - 2026-02-14 - Alinhamento com stack final: PostgreSQL 18, Next.js 16, shadcn/ui e deploy Azure/Vercel.
+- `v2.0.0` - 2026-02-14 - Alinhamento com stack final: PostgreSQL, Next.js 16, shadcn/ui e deploy em Vercel.
 - `v1.1.0` - 2026-02-14 - Ajuste para backend único, dois frontends Next.js e fronteira rígida sem compartilhamento de código.
 - `v1.0.0` - 2026-02-14 - Definição inicial da stack técnica oficial.

@@ -6,7 +6,7 @@ Registrar decisões arquiteturais estruturais de forma rastreável, com contexto
 ## Convenção de Arquivos
 - Pasta: `docs/adr/`
 - Formato: `NNNN-titulo-curto.md`
-- Exemplo: `0001-backend-azure-app-service.md`
+- Exemplo: `0001-backend-deploy-vercel.md`
 
 ## Quando abrir ADR
 - Mudança de padrão arquitetural.

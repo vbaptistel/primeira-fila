@@ -29,7 +29,7 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-012` | `US-004` | Backend | Implementar emissão de ticket QR após pagamento aprovado. | Ticket `valid` criado somente após pagamento confirmado. | `TASK-010` | `TODO` |
 | `TASK-013` | `US-004` | Backend | Criar endpoint de consulta de tickets por pedido. | Buyer acessa apenas tickets permitidos por escopo. | `TASK-012` | `TODO` |
 | `TASK-014` | `US-005` | Backend | Implementar endpoint de validação de QR de check-in. | Ticket usado uma vez; segundo uso negado. | `TASK-012` | `TODO` |
-| `TASK-015` | `US-011` | Backend | Implementar RBAC por tenant em endpoints críticos. | Acesso cruzado bloqueado em testes de integração. | `TASK-006` | `TODO` |
+| `TASK-015` | `US-011` | Backend | Implementar RBAC por tenant em endpoints críticos com claims do Supabase Auth. | Acesso cruzado bloqueado em testes de integração com token válido/inválido. | `TASK-006` | `TODO` |
 | `TASK-016` | `US-010` | Backend | Implementar política comercial default `platform_default_v1`. | Tenant novo recebe política default automaticamente. | `TASK-001` | `TODO` |
 | `TASK-017` | `US-010` | Backend | Versionar política comercial por tenant. | Alteração salva com `version` e `effective_from`. | `TASK-016` | `TODO` |
 | `TASK-018` | `US-010` | Backend | Registrar snapshot financeiro no pedido. | Pedido persiste valores + versão da política aplicada. | `TASK-009`,`TASK-017` | `TODO` |
@@ -40,8 +40,8 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-023` | `US-002` | Frontend Customer | Implementar seleção de assentos e criação de hold. | Hold gerado com tratamento de conflito/expiração. | `TASK-022`,`TASK-008` | `TODO` |
 | `TASK-024` | `US-003` | Frontend Customer | Implementar checkout e pagamento. | Compra finaliza com status consistente do pedido. | `TASK-023`,`TASK-010` | `TODO` |
 | `TASK-025` | `US-004` | Frontend Customer | Criar área de pedidos e ingressos do comprador. | Buyer visualiza ticket QR no portal. | `TASK-013`,`TASK-024` | `TODO` |
-| `TASK-026` | `US-012` | Frontend | Implementar sessão por cookie `HttpOnly`. | Login mantém sessão e renovação via backend. | `TASK-015` | `TODO` |
-| `TASK-027` | `US-012` | Frontend | Implementar logout e invalidação de sessão. | Sessão removida no cliente e backend. | `TASK-026` | `TODO` |
+| `TASK-026` | `US-012` | Frontend | Integrar Supabase Auth para login e sessão no frontend. | Login funcional via provider e sessão segura persistida com cookie `HttpOnly`. | `TASK-015` | `TODO` |
+| `TASK-027` | `US-012` | Frontend | Implementar logout e revogação de sessão no Supabase Auth. | Sessão removida no cliente e token inválido para novas chamadas protegidas. | `TASK-026` | `TODO` |
 | `TASK-028` | `US-006` | Frontend Backoffice | Criar CRUD de eventos/dias/sessões no backoffice. | Organizer Admin publica sessão com sucesso. | `TASK-003`,`TASK-006` | `TODO` |
 | `TASK-029` | `US-007` | Frontend Backoffice | Criar tela de configuração de assentos por sessão. | Assentos criados/bloqueados com validação visual. | `TASK-028`,`TASK-007` | `TODO` |
 | `TASK-030` | `US-008` | Frontend Backoffice | Criar tela de consulta de pedidos/pagamentos/ingressos. | Filtros por status/evento/sessão funcionam. | `TASK-003`,`TASK-013` | `TODO` |
@@ -50,21 +50,21 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-033` | `US-014` | Frontend Shared | Criar base de componentes `shadcn/ui` em `packages/shared`. | Componentes reutilizados pelas duas apps frontend. | `TASK-004` | `CONCLUIDA` |
 | `TASK-034` | `US-014` | Frontend Shared | Criar tokens e tema visual compartilhados. | Tema aplicado de forma consistente em ambas as apps. | `TASK-033` | `CONCLUIDA` |
 | `TASK-035` | `US-015` | Backend | Instrumentar logs estruturados com `trace_id`. | Logs possuem correlação de requisição ponta a ponta. | `TASK-001` | `TODO` |
-| `TASK-036` | `US-015` | Infra | Configurar Application Insights no backend Azure. | Telemetria de requisições e erros visível no portal Azure. | `TASK-050` | `TODO` |
-| `TASK-037` | `US-015` | Infra | Configurar Log Analytics e consultas base. | Queries operacionais disponíveis para suporte. | `TASK-036` | `TODO` |
+| `TASK-036` | `US-015` | Infra | Configurar observabilidade do backend na Vercel. | Métricas e logs de requisição/erro visíveis para operação. | `TASK-039`,`TASK-050` | `TODO` |
+| `TASK-037` | `US-015` | Infra | Configurar consultas/filtros de logs operacionais. | Consultas base de suporte publicadas para incidentes. | `TASK-036` | `TODO` |
 | `TASK-038` | `US-015` | Infra | Criar alertas de erro e latência. | Alertas ativos para 5xx e degradação p95. | `TASK-036`,`TASK-037` | `TODO` |
-| `TASK-039` | `US-013` | Infra | Criar ACR no Azure. | Registry provisionado e acessível pelo pipeline. | - | `TODO` |
-| `TASK-040` | `US-013` | Infra | Criar App Service Plan `S1` + App Service + slot `staging`. | Ambiente backend provisionado com slot funcional. | `TASK-039` | `TODO` |
-| `TASK-041` | `US-013` | Infra | Provisionar PostgreSQL Flexible Server 18. | Banco criado com SSL obrigatório. | - | `TODO` |
-| `TASK-042` | `US-013` | Infra | Configurar firewall restrito no PostgreSQL. | Apenas IPs permitidos acessam o banco. | `TASK-041`,`TASK-040` | `TODO` |
-| `TASK-043` | `US-013` | CI/CD | Criar workflow GitHub Actions de build Docker backend. | Imagem publicada no ACR em push da branch principal. | `TASK-039` | `TODO` |
-| `TASK-044` | `US-013` | CI/CD | Criar workflow de deploy para slot `staging`. | Deploy automático no staging após build. | `TASK-040`,`TASK-043` | `TODO` |
-| `TASK-045` | `US-013` | CI/CD | Adicionar smoke test antes do swap. | Pipeline bloqueia swap se smoke test falhar. | `TASK-044` | `TODO` |
-| `TASK-046` | `US-013` | Operação | Documentar procedimento de swap para produção. | Runbook de deploy validado em simulação. | `TASK-045` | `TODO` |
-| `TASK-047` | `US-013` | Operação | Documentar rollback por swap reverso manual. | Rollback testado e registrado em checklist. | `TASK-046` | `TODO` |
+| `TASK-039` | `US-013` | Infra | Configurar projeto Vercel do backend com integração nativa do repositório. | Deploy backend acionado automaticamente pela plataforma. | - | `CONCLUIDA` |
+| `TASK-040` | `US-013` | Infra | Configurar runtime/build do backend no projeto Vercel. | Build e inicialização do backend concluídos sem erro na Vercel. | `TASK-039` | `CONCLUIDA` |
+| `TASK-041` | `US-013` | Infra | Provisionar projeto e banco PostgreSQL no Supabase para produção. | Projeto Supabase criado com banco operacional e conexão SSL ativa. | - | `CONCLUIDA` |
+| `TASK-042` | `US-013` | Infra | Configurar segurança de acesso ao PostgreSQL no Supabase. | Baseline de privilégios mínimos versionado e execução validada no ambiente de produção. | `TASK-041` | `CONCLUIDA` |
+| `TASK-043` | `US-013` | CI/CD | Manter workflow GitHub Actions para qualidade do backend. | Workflow executa lint, typecheck e build do backend em PR/push. | `TASK-001` | `CONCLUIDA` |
+| `TASK-044` | `US-013` | Deploy Backend | Validar deploy automático do backend na Vercel em push na branch principal. | Deploy em `production` funcional e rastreável na Vercel. | `TASK-039`,`TASK-040`,`TASK-050` | `CONCLUIDA` |
+| `TASK-045` | `US-013` | Operação | Definir smoke test mínimo pós-deploy backend. | Script e checklist de smoke test (`/health` + endpoint crítico) aplicáveis a cada release. | `TASK-044` | `CONCLUIDA` |
+| `TASK-046` | `US-013` | Operação | Documentar procedimento de release de produção na Vercel. | Runbook de deploy publicado e revisado. | `TASK-044` | `CONCLUIDA` |
+| `TASK-047` | `US-013` | Operação | Documentar rollback por promoção/redeploy de versão estável na Vercel. | Rollback documentado e validado em simulação. | `TASK-046` | `CONCLUIDA` |
 | `TASK-048` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-customer` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-002` | `CONCLUIDA` |
 | `TASK-049` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-backoffice` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-003` | `CONCLUIDA` |
-| `TASK-050` | `US-013` | Segurança | Configurar OIDC GitHub -> Azure com RBAC mínimo. | Pipeline sem secret estático para deploy no Azure. | `TASK-039`,`TASK-040` | `TODO` |
+| `TASK-050` | `US-013` | Segurança | Configurar variáveis de ambiente e segredos do backend na Vercel. | Segredos segregados por ambiente (`preview`/`production`) e sem exposição no repositório. | `TASK-039` | `CONCLUIDA` |
 | `TASK-051` | `US-015` | Qualidade | Criar testes de arquitetura para bloquear import cruzado. | Teste automatizado falha em import proibido. | `TASK-005` | `CONCLUIDA` |
 | `TASK-052` | `US-003` | Qualidade | Criar testes de integração de idempotência de pagamento. | Cenários duplicados não quebram consistência. | `TASK-010`,`TASK-011` | `TODO` |
 | `TASK-053` | `US-002` | Qualidade | Criar testes de concorrência de assentos. | Sem overbooking em cenários concorrentes críticos. | `TASK-008` | `TODO` |
@@ -82,7 +82,7 @@ Cadência sugerida: sprints de 2 semanas.
 | Ordem | Fase | Sprint | Objetivo | Tasks |
 |---|---|---|---|---|
 | `1` | Fundação | `Sprint 01` | Estruturar repositório, apps frontend e bases de compartilhamento no frontend. | `TASK-001`,`TASK-002`,`TASK-003`,`TASK-004`,`TASK-005`,`TASK-033`,`TASK-034`,`TASK-048`,`TASK-049`,`TASK-051` |
-| `2` | Plataforma | `Sprint 02` | Provisionar Azure + pipeline de deploy backend com swap/rollback. | `TASK-039`,`TASK-040`,`TASK-041`,`TASK-042`,`TASK-050`,`TASK-043`,`TASK-044`,`TASK-045`,`TASK-046`,`TASK-047` |
+| `2` | Plataforma | `Sprint 02` | Consolidar deploy backend na Vercel, segurança de ambiente e operação de rollback. | `TASK-039`,`TASK-040`,`TASK-041`,`TASK-042`,`TASK-050`,`TASK-043`,`TASK-044`,`TASK-045`,`TASK-046`,`TASK-047` |
 | `3` | Domínio Core | `Sprint 03` | Implementar catálogo de eventos/sessões, RBAC e políticas comerciais versionadas. | `TASK-006`,`TASK-007`,`TASK-015`,`TASK-016`,`TASK-017`,`TASK-058`,`TASK-035` |
 | `4` | Checkout Core | `Sprint 04` | Implementar jornada backend de assento, pedido, pagamento, ticket, check-in e reembolso. | `TASK-008`,`TASK-009`,`TASK-010`,`TASK-011`,`TASK-012`,`TASK-013`,`TASK-014`,`TASK-018`,`TASK-019`,`TASK-020`,`TASK-052`,`TASK-053`,`TASK-059` |
 | `5` | Experiência Buyer | `Sprint 05` | Entregar jornada completa no `web-customer` com autenticação e tickets. | `TASK-021`,`TASK-022`,`TASK-023`,`TASK-024`,`TASK-025`,`TASK-026`,`TASK-027` |
@@ -105,6 +105,12 @@ Cadência sugerida: sprints de 2 semanas.
 - Dependências externas podem deslocar tasks críticas de infraestrutura e integração.
 
 ## Changelog
+- `v1.10.0` - 2026-02-14 - Task `TASK-042` concluída com baseline aplicado e validação de ACL/grants no Supabase de produção.
+- `v1.9.0` - 2026-02-14 - Task `TASK-045` concluída com script de smoke test; `TASK-042` movida para `EM_ANDAMENTO` com baseline SQL versionado.
+- `v1.8.0` - 2026-02-14 - Task `TASK-041` concluída com Supabase provisionado.
+- `v1.7.0` - 2026-02-14 - Ajuste das tasks de autenticação para integração com Supabase Auth.
+- `v1.6.0` - 2026-02-14 - Refinamento das tasks de banco para PostgreSQL gerenciado no Supabase.
+- `v1.5.0` - 2026-02-14 - Backlog de deploy/infra migrado de Azure para Vercel, com atualização de status das tasks já concluídas no backend.
 - `v1.4.0` - 2026-02-14 - Fase 1 finalizada com deploy Vercel validado para `web-customer` e `web-backoffice`.
 - `v1.3.0` - 2026-02-14 - Ajuste da estratégia de deploy frontend para Vercel nativa, sem workflows de deploy no GitHub Actions.
 - `v1.2.0` - 2026-02-14 - Atualização de status da Fase 1 com fundação concluída e deploy frontend em andamento.

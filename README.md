@@ -44,12 +44,19 @@ npm run dev --workspace @primeira-fila/backend
 - `frontend/*` não pode importar nada de `backend/*`.
 - A validação automática está em `scripts/check-boundaries.mjs`.
 
-## Deploy frontend (Vercel)
+## Deploy (Vercel)
 
-Deploy via integração nativa da Vercel com o repositório (sem GitHub Actions para frontend).
+Deploy via integração nativa da Vercel com o repositório (sem GitHub Actions para deploy).
 
 Configuração esperada:
 
+- Projeto Vercel do backend apontando para `backend/`.
 - Projeto Vercel para `web-customer` apontando para `frontend/apps/web-customer`.
 - Projeto Vercel para `web-backoffice` apontando para `frontend/apps/web-backoffice`.
 - Deploy automático por push na branch principal via Vercel.
+
+Smoke test pós-deploy do backend:
+
+```bash
+npm run smoke:backend -- --base-url=https://<backend-url>
+```

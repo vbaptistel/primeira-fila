@@ -40,7 +40,7 @@ A plataforma precisa suportar venda e check-in com desempenho consistente e segu
 - Operações de fechamento usam verificação transacional.
 
 ## Segurança
-- Autenticação via JWT.
+- Autenticação via Supabase Auth (JWT).
 - RBAC por papel e escopo de tenant.
 - TLS em trânsito.
 - Criptografia de dados sensíveis em repouso.
@@ -55,7 +55,7 @@ A plataforma precisa suportar venda e check-in com desempenho consistente e segu
 ## Observabilidade
 - Logs estruturados com `trace_id`.
 - Métricas de API, checkout, pagamento, emissão e check-in.
-- Application Insights + Log Analytics para monitoramento operacional.
+- Monitoramento operacional compatível com Vercel (logs, métricas e alertas).
 - Alertas para falhas críticas e degradação de latência.
 
 ## Alertas Operacionais de Referência
@@ -80,7 +80,8 @@ A plataforma precisa suportar venda e check-in com desempenho consistente e segu
 - Integrações externas podem impactar SLO sem controle total interno.
 
 ## Changelog
-- `v2.0.0` - 2026-02-14 - Alinhamento de observabilidade para Application Insights + Log Analytics.
+- `v2.1.0` - 2026-02-14 - Atualização do requisito de autenticação para Supabase Auth.
+- `v2.0.0` - 2026-02-14 - Alinhamento de observabilidade para stack compatível com deploy em Vercel.
 - `v1.2.0` - 2026-02-14 - Inclusão de meta de conciliação financeira diária.
 - `v1.1.0` - 2026-02-14 - Inclusão de SLI formais e alertas de referência.
 - `v1.0.0` - 2026-02-14 - Versão inicial.

@@ -10,7 +10,7 @@ A prioridade do MVP é velocidade de entrega com confiabilidade operacional. A e
 - Estilo: monólito modular.
 - Interface backend: REST/JSON.
 - Processamento interno: síncrono em todas as operações nesta fase.
-- Persistência inicial: PostgreSQL único.
+- Persistência inicial: PostgreSQL gerenciado no Supabase.
 - Isolamento de organizadores por `tenant_id`.
 - Integrações externas obrigatórias: gateway de pagamento e e-mail transacional.
 
@@ -21,7 +21,7 @@ A prioridade do MVP é velocidade de entrega com confiabilidade operacional. A e
 - Observabilidade desde o MVP para operação em evento real.
 
 ## Módulos Internos
-- `IdentityAccess`: autenticação JWT e RBAC.
+- `IdentityAccess`: autenticação via Supabase Auth e RBAC.
 - `TenancyBranding`: resolução por subdomínio e configuração white-label.
 - `Catalog`: evento, dia, sessão e mapa de assentos.
 - `Inventory`: hold, expiração, bloqueio e venda.
@@ -50,7 +50,7 @@ flowchart TD
   API --> AUD[AuditCompliance]
   PAY --> PG[Gateway de Pagamento]
   API --> ESP[Serviço de E-mail]
-  API --> DB[(PostgreSQL 18)]
+  API --> DB[(PostgreSQL - Supabase)]
 ```
 
 ## Fluxos Transacionais Críticos
@@ -64,10 +64,10 @@ flowchart TD
 - Listagens e busca por query relacional (sem motor dedicado neste ciclo).
 
 ## Segurança e Observabilidade
-- JWT para autenticação.
+- JWT emitido pelo Supabase Auth para autenticação.
 - RBAC por papel: `platform_admin`, `organizer_admin`, `operator`, `buyer`.
 - TLS em trânsito e criptografia de dados sensíveis em repouso.
-- Logs estruturados com `trace_id` e monitoramento em Application Insights.
+- Logs estruturados com `trace_id` e monitoramento operacional em stack compatível com Vercel.
 
 ## Regras e Critérios de Aceite
 - Fronteiras de módulo devem reduzir acoplamento entre domínios.
@@ -79,6 +79,9 @@ flowchart TD
 - Processamento totalmente síncrono pode elevar latência em integrações externas.
 
 ## Changelog
+- `v2.3.0` - 2026-02-14 - Adoção do Supabase Auth como provider de autenticação.
+- `v2.2.0` - 2026-02-14 - Atualização da persistência para PostgreSQL gerenciado no Supabase.
+- `v2.1.0` - 2026-02-14 - Ajuste de observabilidade para modelo de deploy backend na Vercel.
 - `v2.0.0` - 2026-02-14 - Ajuste para modelo síncrono com visão de dois frontends.
 - `v1.1.0` - 2026-02-14 - Regras finas de consistência transacional.
 - `v1.0.0` - 2026-02-14 - Versão inicial.

@@ -26,14 +26,15 @@ Siga estas regras para manter consistência arquitetural, qualidade técnica e a
 
 ## Stack Oficial
 - Linguagem principal: TypeScript.
-- Backend: Node.js + NestJS (Fastify) + Prisma + PostgreSQL 18.
+- Backend: Node.js + NestJS (Fastify) + Prisma + PostgreSQL (Supabase).
+- Autenticação: Supabase Auth (tokens JWT + RBAC por tenant no backend).
 - Frontend: Next.js 16 + React 19 + `shadcn/ui`.
 - Qualidade: ESLint, TypeScript strict, testes de arquitetura.
 
 ## Deploy
-- Backend: Azure (App Service + ACR) via GitHub Actions.
+- Backend: Vercel com integração nativa do repositório.
 - Frontend: Vercel com integração nativa do repositório.
-- Não criar workflows de deploy frontend no GitHub Actions.
+- Não criar workflows de deploy no GitHub Actions (backend ou frontend).
 
 ## Comandos Padrão
 Executar da raiz do repositório:
@@ -90,5 +91,5 @@ npm run dev --workspace web-backoffice
 ### Don't
 - Não importar código de `backend/` dentro de `frontend/` (e vice-versa).
 - Não adicionar filas, workers, mensageria ou outbox.
-- Não criar pipeline de deploy frontend no GitHub Actions.
+- Não criar pipeline de deploy no GitHub Actions.
 - Não alterar stack oficial sem registrar decisão técnica (ADR).

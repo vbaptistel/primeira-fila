@@ -65,7 +65,7 @@ docs/
 
 ## Build, Teste e Deploy
 - Pipeline separado para `backend` e `frontend`.
-- Deploy do backend em unidade única no Azure App Service.
+- Deploy do backend em unidade única na Vercel.
 - Deploy independente das duas aplicações frontend na Vercel.
 
 ## Regras e Critérios de Aceite

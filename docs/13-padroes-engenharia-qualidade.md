@@ -60,10 +60,10 @@ Com backend e frontend separados no mesmo repositório, regras de engenharia sã
 
 ## Padrões de Release
 - Backend:
-  - build de imagem Docker;
-  - deploy em slot `staging` no App Service;
+  - build da aplicação backend;
+  - deploy via integração nativa da Vercel;
   - smoke test;
-  - swap manual para produção.
+  - rollback por promoção/redeploy da versão estável anterior.
 - Frontend:
   - deploy independente por app na Vercel.
 
@@ -84,7 +84,7 @@ Com backend e frontend separados no mesmo repositório, regras de engenharia sã
 
 ## Changelog
 - `v2.1.0` - 2026-02-14 - Remoção de menções a componentes de execução paralela na política de qualidade.
-- `v2.0.0` - 2026-02-14 - Alinhamento com backend síncrono + deploy Azure/Vercel.
+- `v2.0.0` - 2026-02-14 - Alinhamento com backend síncrono + deploy em Vercel.
 - `v1.2.0` - 2026-02-14 - Ajuste de cobertura e critérios para separação backend/frontend.
 - `v1.1.0` - 2026-02-14 - Inclusão de testes de arquitetura e validações de consistência transacional.
 - `v1.0.0` - 2026-02-14 - Definição inicial dos padrões de engenharia e qualidade.

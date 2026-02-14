@@ -20,7 +20,7 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 11. `docs/11-stack-linguagens-frameworks.md`
 12. `docs/12-divisao-aplicacoes-monorepo.md`
 13. `docs/13-padroes-engenharia-qualidade.md`
-14. `docs/14-deploy-backend-azure.md`
+14. `docs/14-deploy-backend-vercel.md`
 15. `docs/15-estorias-mvp.md`
 16. `docs/16-tasks-implementacao-mvp.md`
 
@@ -60,13 +60,18 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 - Integrações externas podem exigir refinamentos de contrato.
 
 ## Changelog
+- `v3.1.0` - 2026-02-14 - Conclusão do baseline de segurança do Supabase (TASK-042) com evidência de ACL/grants.
+- `v3.0.0` - 2026-02-14 - Avanço da Fase 2 com baseline de segurança Supabase e smoke test automatizado de backend pós-deploy.
+- `v2.9.0` - 2026-02-14 - Definição do Supabase Auth como provider de autenticação e alinhamento de stack, contratos, roadmap e backlog.
+- `v2.8.0` - 2026-02-14 - Atualização da base de dados oficial para PostgreSQL gerenciado no Supabase em stack, arquitetura, deploy e backlog.
+- `v2.7.0` - 2026-02-14 - Correção da trilha de deploy: backend também em Vercel e atualização cruzada de documentação/tarefas.
 - `v2.6.0` - 2026-02-14 - Fechamento da Fase 1 com validação de deploy frontend na Vercel e status de sprint atualizado.
 - `v2.5.0` - 2026-02-14 - Ajuste de estratégia de deploy frontend: Vercel nativa sem workflows de deploy no GitHub Actions.
 - `v2.4.0` - 2026-02-14 - Início da implementação da Fase 1 no código com monorepo base, pacote compartilhado frontend e validação de fronteiras.
 - `v2.3.0` - 2026-02-14 - Definição da ordem de execução das tasks por fases e sprints no Documento 16.
 - `v2.2.0` - 2026-02-14 - Inclusão das estórias do MVP e backlog de tasks com coluna de status.
 - `v2.1.0` - 2026-02-14 - Remoção completa de menções a execução paralela na documentação técnica.
-- `v2.0.0` - 2026-02-14 - Alinhamento final de stack (backend/frontend) e inclusão do padrão de deploy Azure.
+- `v2.0.0` - 2026-02-14 - Alinhamento final de stack (backend/frontend) e inclusão do padrão de deploy backend.
 - `v1.6.0` - 2026-02-14 - Separação explícita backend/frontend e restrição de compartilhamento de código.
 - `v1.4.0` - 2026-02-14 - Inclusão da trilha de documentação técnica (arquitetura, stack, apps e qualidade).
 - `v1.3.0` - 2026-02-14 - Inclusão de regra global para fallback de política comercial default.

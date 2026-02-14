@@ -11,7 +11,9 @@ async function bootstrap() {
     new FastifyAdapter({ logger: true })
   );
 
-  app.setGlobalPrefix("v1");
+  app.setGlobalPrefix("v1", {
+    exclude: ["health"]
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -30,7 +32,7 @@ async function bootstrap() {
   SwaggerModule.setup("docs", app, document);
 
   await app.listen({
-    host: "0.0.0.0",
+    host: process.env.HOST ?? "0.0.0.0",
     port: Number(process.env.PORT ?? 3001)
   });
 }

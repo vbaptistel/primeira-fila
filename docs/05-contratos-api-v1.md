@@ -16,7 +16,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 ## Convenções Globais
 - Base path: `/v1`
 - Formato: `application/json`
-- Header de autenticação: `Authorization: Bearer <JWT>`
+- Header de autenticação: `Authorization: Bearer <supabase_access_token>`
 - Header de correlação: `X-Request-Id` (opcional, recomendado)
 - Header de idempotência quando obrigatório: `Idempotency-Key: <uuid>`
 - Paginação:
@@ -43,7 +43,9 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Janela mínima de retenção da chave: 24h.
 
 ## Autenticação e Autorização
-- JWT para usuários autenticados.
+- Supabase Auth como provider de identidade.
+- JWT do Supabase Auth para usuários autenticados.
+- Fluxos de login, refresh e logout realizados pelo provider (SDK), fora da API de domínio.
 - Escopo por tenant em todas as operações de organizador e operador.
 - RBAC:
   - `platform_admin`: escopo global.
@@ -54,7 +56,6 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 ## Endpoints Principais
 | Método | Endpoint | Auth | Papel mínimo |
 |---|---|---|---|
-| POST | `/v1/auth/login` | Não | Público |
 | GET | `/v1/me` | Sim | Qualquer autenticado |
 | GET | `/v1/tenants/{tenant_id}/commercial-policy` | Sim | Organizer/Admin |
 | GET | `/v1/events` | Não | Público |
@@ -158,6 +159,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.4.0` - 2026-02-14 - Alinhamento de autenticação para Supabase Auth como provider de identidade.
 - `v1.3.0` - 2026-02-14 - Regra explícita de fallback para política default (`platform_default_v1`).
 - `v1.2.0` - 2026-02-14 - Inclusão de contrato de política comercial e campos financeiros de snapshot em pedido/reembolso.
 - `v1.1.0` - 2026-02-14 - Semântica de idempotência, paginação e regras finas de estado HTTP.

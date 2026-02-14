@@ -10,6 +10,7 @@ O produto seguirá monólito modular no MVP, com separação clara de domínio e
 - Estilo: monólito modular com fronteiras internas explícitas.
 - Módulos do MVP: `IdentityAccess`, `TenancyBranding`, `Catalog`, `Inventory`, `CheckoutOrders`, `Payments`, `Ticketing`, `CheckIn`, `Notifications`, `Backoffice`, `AuditCompliance`.
 - Padrão interno por módulo: Clean Architecture leve (camadas de domínio, aplicação e infraestrutura).
+- Provider de identidade: Supabase Auth.
 - Integração entre módulos: contratos internos síncronos.
 - Acesso entre módulos: proibido acesso direto a dados de outro módulo.
 - Fronteira transacional: uma transação por caso de uso crítico.
@@ -91,7 +92,7 @@ O produto seguirá monólito modular no MVP, com separação clara de domínio e
 - Operações críticas devem permanecer consistentes no fluxo síncrono.
 
 ## Assunções e Defaults
-- Banco de dados único PostgreSQL 18 no MVP.
+- Banco de dados único PostgreSQL gerenciado no Supabase no MVP.
 - Contratos internos implementados em TypeScript.
 - Não haverá extração de microserviço nesta fase.
 
@@ -100,6 +101,8 @@ O produto seguirá monólito modular no MVP, com separação clara de domínio e
 - Integrações externas com instabilidade exigem estratégia operacional de contingência.
 
 ## Changelog
+- `v2.3.0` - 2026-02-14 - Definição explícita do Supabase Auth como provider de identidade arquitetural.
+- `v2.2.0` - 2026-02-14 - Ajuste da assunção de banco para PostgreSQL gerenciado no Supabase.
 - `v2.1.0` - 2026-02-14 - Remoção de menções a processamento paralelo interno.
 - `v2.0.0` - 2026-02-14 - Ajuste para arquitetura síncrona no estágio atual.
 - `v1.1.0` - 2026-02-14 - Especificação executável de contratos internos e testes arquiteturais.

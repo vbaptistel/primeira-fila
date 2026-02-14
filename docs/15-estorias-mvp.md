@@ -30,10 +30,10 @@ As estórias abaixo foram derivadas dos documentos de domínio, arquitetura, con
 | `US-009` | Organizer Admin | Como organizador, quero solicitar reembolso manual conforme política comercial. | Reembolso só com elegibilidade válida; motivo obrigatório; atualização de estados financeiros e ticket; trilha de auditoria. | `P1` | `Aprovada` |
 | `US-010` | Platform Admin | Como administrador da plataforma, quero manter política comercial versionada por tenant. | Default `platform_default_v1`; mudança não retroativa; snapshot financeiro no pedido com versão aplicada. | `P1` | `Aprovada` |
 | `US-011` | Platform Admin | Como administrador, quero isolar acesso por tenant para segurança de dados. | RBAC por tenant em todas as operações; tentativas de acesso cruzado bloqueadas e auditadas. | `P0` | `Aprovada` |
-| `US-012` | Comprador | Como comprador, quero autenticação segura e sessão estável no frontend. | Sessão por cookie `HttpOnly`; renovação via backend; logout invalida sessão. | `P1` | `Aprovada` |
-| `US-013` | Engenharia | Como time técnico, quero deploy confiável do backend na Azure com rollback rápido. | Deploy por slot `staging` -> `production`; smoke test obrigatório; rollback por swap reverso manual. | `P0` | `Aprovada` |
+| `US-012` | Comprador | Como comprador, quero autenticação segura e sessão estável no frontend. | Login via Supabase Auth; sessão com cookie seguro (`HttpOnly`); renovação e logout via provider; backend valida escopo de acesso. | `P1` | `Aprovada` |
+| `US-013` | Engenharia | Como time técnico, quero deploy confiável do backend na Vercel com rollback rápido. | Deploy automático em `production` na branch principal; smoke test obrigatório; rollback por promoção/redeploy da versão estável anterior. | `P0` | `Aprovada` |
 | `US-014` | Engenharia | Como time técnico, quero separar backend e frontend sem compartilhamento de código. | Estrutura `backend/` e `frontend/`; pacote `frontend/packages/shared`; bloqueio de import cruzado em CI. | `P0` | `Aprovada` |
-| `US-015` | Engenharia | Como time técnico, quero observabilidade operacional para detectar falhas rapidamente. | Application Insights + Log Analytics ativos; alertas de latência/erro; correlação por `trace_id`. | `P1` | `Aprovada` |
+| `US-015` | Engenharia | Como time técnico, quero observabilidade operacional para detectar falhas rapidamente. | Logs estruturados e métricas operacionais ativos; alertas de latência/erro; correlação por `trace_id`. | `P1` | `Aprovada` |
 
 ## Regras e Critérios de Aceite
 - Toda estória deve mapear para uma ou mais tasks no Documento 16.
@@ -42,7 +42,9 @@ As estórias abaixo foram derivadas dos documentos de domínio, arquitetura, con
 
 ## Riscos e Limitações
 - Escopo do MVP pode pressionar inclusão de estórias `P2` antes da estabilização das `P0`.
-- Dependências externas (gateway, e-mail, Azure) podem impactar previsibilidade de entrega.
+- Dependências externas (gateway, e-mail, Supabase e plataforma de deploy) podem impactar previsibilidade de entrega.
 
 ## Changelog
+- `v1.2.0` - 2026-02-14 - Atualização da estória de autenticação para Supabase Auth.
+- `v1.1.0` - 2026-02-14 - Ajuste das estórias técnicas para deploy backend na Vercel e observabilidade agnóstica de provedor.
 - `v1.0.0` - 2026-02-14 - Primeira versão das estórias do MVP.
