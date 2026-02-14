@@ -8,7 +8,9 @@
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prisma:generate": "NODE_PATH=../node_modules prisma generate --schema prisma/schema.prisma",
+    "db:push": "NODE_PATH=../node_modules prisma db push --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@fastify/static": "^9.0.0",
@@ -17,6 +19,7 @@
     "@nestjs/core": "^11.1.7",
     "@nestjs/platform-fastify": "^11.1.7",
     "@nestjs/swagger": "^11.2.1",
+    "@prisma/client": "^6.16.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "reflect-metadata": "^0.2.2",
@@ -29,6 +32,7 @@
     "@typescript-eslint/eslint-plugin": "^8.24.0",
     "@typescript-eslint/parser": "^8.24.0",
     "eslint": "^9.20.1",
+    "prisma": "^6.16.2",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.24.0",
     "vitest": "^3.0.9"

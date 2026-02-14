@@ -58,6 +58,11 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 |---|---|---|---|
 | GET | `/v1/me` | Sim | Qualquer autenticado |
 | GET | `/v1/tenants/{tenant_id}/commercial-policy` | Sim | Organizer/Admin |
+| GET | `/v1/tenants/{tenant_id}/events` | Sim | Organizer/Admin |
+| POST | `/v1/tenants/{tenant_id}/events` | Sim | Organizer/Admin |
+| GET | `/v1/tenants/{tenant_id}/events/{event_id}` | Sim | Organizer/Admin |
+| PATCH | `/v1/tenants/{tenant_id}/events/{event_id}` | Sim | Organizer/Admin |
+| DELETE | `/v1/tenants/{tenant_id}/events/{event_id}` | Sim | Organizer/Admin |
 | GET | `/v1/events` | Não | Público |
 | GET | `/v1/events/{event_id}` | Não | Público |
 | GET | `/v1/sessions/{session_id}/seats` | Não | Público |
@@ -69,6 +74,20 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 | GET | `/v1/orders/{order_id}/tickets` | Sim | Buyer/Admin do escopo |
 | POST | `/v1/checkins/validate-qr` | Sim | Operator/Admin |
 | POST | `/v1/orders/{order_id}/refunds` | Sim | Organizer/Admin |
+
+### Endpoints de Catálogo (Organizer/Admin)
+- `EventDay`:
+  - `POST /v1/tenants/{tenant_id}/events/{event_id}/days`
+  - `GET /v1/tenants/{tenant_id}/events/{event_id}/days`
+  - `GET /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}`
+  - `PATCH /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}`
+  - `DELETE /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}`
+- `Session`:
+  - `POST /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions`
+  - `GET /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions`
+  - `GET /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}`
+  - `PATCH /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}`
+  - `DELETE /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}`
 
 ## Fluxo Padrão de Checkout
 1. `POST /v1/sessions/{session_id}/holds`
@@ -159,6 +178,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.5.0` - 2026-02-14 - Inclusão dos endpoints de catálogo de organizador (`Event`, `EventDay`, `Session`) no contrato v1.
 - `v1.4.0` - 2026-02-14 - Alinhamento de autenticação para Supabase Auth como provider de identidade.
 - `v1.3.0` - 2026-02-14 - Regra explícita de fallback para política default (`platform_default_v1`).
 - `v1.2.0` - 2026-02-14 - Inclusão de contrato de política comercial e campos financeiros de snapshot em pedido/reembolso.

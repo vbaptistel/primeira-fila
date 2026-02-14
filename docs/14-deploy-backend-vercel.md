@@ -43,6 +43,9 @@ Backend único em NestJS, com processamento totalmente síncrono nesta fase, pub
 ## Baseline de Segurança do Supabase (TASK-042)
 - Role de runtime dedicada para o backend (sem privilégios administrativos).
 - Revogação de privilégios amplos de `PUBLIC` no schema `public`.
+- Revogação de grants para `anon`/`authenticated` em tabelas existentes.
+- Habilitação de `RLS` + `FORCE RLS` em tabelas existentes.
+- Padrão automático em novas tabelas com event trigger (`RLS` + `FORCE RLS` + revoke para `anon`/`authenticated`).
 - Grants mínimos para tabelas e sequências do schema de aplicação.
 - `DATABASE_URL` com SSL obrigatório e sem credenciais de administrador.
 - Rotação periódica de senha da role de runtime e atualização de segredo na Vercel.
@@ -62,6 +65,11 @@ Evidência operacional registrada (2026-02-14):
   - schema `public` sem privilégio de `CREATE` para `PUBLIC` (apenas `USAGE`);
   - database `postgres` sem grants amplos para `PUBLIC`;
   - default privileges no schema `public` revisados para os roles administrativos.
+- Verificação adicional do padrão de segurança:
+  - tabelas `events`, `event_days` e `sessions` com `RLS` e `FORCE RLS` ativos;
+  - sem grants de tabela para `anon` e `authenticated` nessas tabelas;
+  - event trigger `trg_enforce_public_table_security` ativo;
+  - prova de criação de tabela nova validou `RLS` + `FORCE RLS` + ausência de grants para `anon`/`authenticated`.
 
 ## Fluxo de Deploy
 1. `push` na branch principal dispara build/deploy automático em produção na Vercel.
@@ -79,6 +87,12 @@ Evidência operacional registrada (2026-02-14):
   - `/docs-json` (endpoint crítico de leitura no estágio atual do backend).
 - Endpoint crítico pode ser sobrescrito:
   - `npm run smoke:backend -- --base-url=https://<backend-url> --critical-path=/v1/<endpoint>`
+
+Evidência operacional registrada (2026-02-14):
+- Smoke test executado com sucesso em `https://primeira-fila-backend.vercel.app`.
+- Resultados:
+  - `OK - Health check passou.`
+  - `OK - Endpoint crítico de leitura passou.`
 
 ## Estratégia de Rollback
 - Critérios de rollback:
@@ -118,6 +132,7 @@ Evidência operacional registrada (2026-02-14):
 - Deploy em horário de pico aumenta risco operacional em caso de regressão.
 
 ## Changelog
+- `v2.4.0` - 2026-02-14 - Baseline reforçado com padrão automático de segurança para novas tabelas no Supabase (`RLS` + `FORCE RLS` + revoke para `anon`/`authenticated`).
 - `v2.3.0` - 2026-02-14 - Inclusão de baseline de segurança Supabase e automação de smoke test pós-deploy.
 - `v2.2.0` - 2026-02-14 - Inclusão do Supabase Auth como provider oficial de autenticação.
 - `v2.1.0` - 2026-02-14 - Atualização do banco para PostgreSQL gerenciado no Supabase.

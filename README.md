@@ -38,6 +38,13 @@ npm run dev --workspace web-backoffice
 npm run dev --workspace @primeira-fila/backend
 ```
 
+## Backend + Banco
+
+```bash
+npm run prisma:generate --workspace @primeira-fila/backend
+npm run db:push --workspace @primeira-fila/backend
+```
+
 ## Regra de fronteira
 
 - `backend/*` não pode importar nada de `frontend/*`.

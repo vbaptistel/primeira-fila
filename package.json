@@ -19,5 +19,8 @@
     "test:arch": "node scripts/check-boundaries.mjs",
     "smoke:backend": "node scripts/smoke-backend.mjs",
     "ci": "npm run lint && npm run typecheck && npm run test:arch && npm run build"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2"
   }
 }

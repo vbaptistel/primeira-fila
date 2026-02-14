@@ -21,3 +21,4 @@ coverage/
 
 # Generated
 **/*.tsbuildinfo
+backend/src/generated/
