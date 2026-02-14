@@ -1,6 +1,6 @@
 import { Transform, Type } from "class-transformer";
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Length, MaxLength, Min } from "class-validator";
-import { SessionStatus } from "@prisma/client";
+import { SessionStatus } from "../../../generated/prisma/client";
 
 function normalizeCurrencyCode(value: unknown): unknown {
   if (typeof value !== "string") {

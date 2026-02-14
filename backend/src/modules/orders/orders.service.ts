@@ -12,7 +12,7 @@ import {
   SessionHoldStatus,
   SessionSeatStatus,
   SessionStatus
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 import { createHash } from "node:crypto";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CreateOrderDto } from "./dto/create-order.dto";

@@ -1,4 +1,4 @@
-import { EventDayStatus } from "@prisma/client";
+import { EventDayStatus } from "../../../generated/prisma/client";
 import { IsDateString, IsEnum, IsOptional } from "class-validator";
 
 export class CreateEventDayDto {

@@ -1,4 +1,4 @@
-import { EventStatus } from "@prisma/client";
+import { EventStatus } from "../../../generated/prisma/client";
 import { IsEnum, IsOptional, IsString, Matches, MaxLength } from "class-validator";
 
 const EVENT_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

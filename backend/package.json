@@ -3,14 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "npm run prisma:generate",
     "dev": "nest start --watch",
+    "prebuild": "npm run prisma:generate",
     "build": "nest build",
     "start": "node dist/main.js",
+    "prelint": "npm run prisma:generate",
     "lint": "eslint \"src/**/*.ts\"",
+    "pretypecheck": "npm run prisma:generate",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run prisma:generate",
     "test": "vitest run",
-    "prisma:generate": "mkdir -p node_modules/@prisma && ln -sf ../../../node_modules/@prisma/client node_modules/@prisma/client && PRISMA_GENERATE_SKIP_AUTOINSTALL=1 NODE_PATH=../node_modules prisma generate --schema prisma/schema.prisma",
-    "db:push": "NODE_PATH=../node_modules prisma db push --schema prisma/schema.prisma --skip-generate"
+    "prisma:generate": "PRISMA_GENERATE_SKIP_AUTOINSTALL=1 prisma generate",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "@fastify/static": "^9.0.0",
@@ -19,9 +24,11 @@
     "@nestjs/core": "^11.1.7",
     "@nestjs/platform-fastify": "^11.1.7",
     "@nestjs/swagger": "^11.2.1",
-    "@prisma/client": "^6.16.2",
+    "@prisma/adapter-pg": "^7.4.0",
+    "@prisma/client": "^7.4.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
@@ -32,7 +39,6 @@
     "@typescript-eslint/eslint-plugin": "^8.24.0",
     "@typescript-eslint/parser": "^8.24.0",
     "eslint": "^9.20.1",
-    "prisma": "^6.16.2",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.24.0",
     "vitest": "^3.0.9"

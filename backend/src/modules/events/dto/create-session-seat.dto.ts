@@ -1,4 +1,4 @@
-import { SessionSeatStatus } from "@prisma/client";
+import { SessionSeatStatus } from "../../../generated/prisma/client";
 import { Transform, Type } from "class-transformer";
 import { IsEnum, IsInt, IsOptional, IsString, Matches, MaxLength, Min } from "class-validator";
 

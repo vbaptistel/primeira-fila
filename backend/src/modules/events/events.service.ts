@@ -12,7 +12,7 @@ import {
   SessionHoldStatus,
   SessionSeatStatus,
   SessionStatus
-} from "@prisma/client";
+} from "../../generated/prisma/client";
 import { CreateEventDayDto } from "./dto/create-event-day.dto";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { CreateHoldDto } from "./dto/create-hold.dto";
