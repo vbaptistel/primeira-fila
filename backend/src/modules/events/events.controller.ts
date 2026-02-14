@@ -17,9 +17,11 @@ import { ApiTags } from "@nestjs/swagger";
 import { CreateEventDayDto } from "./dto/create-event-day.dto";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { CreateSessionDto } from "./dto/create-session.dto";
+import { CreateSessionSeatDto } from "./dto/create-session-seat.dto";
 import { UpdateEventDayDto } from "./dto/update-event-day.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { UpdateSessionDto } from "./dto/update-session.dto";
+import { UpdateSessionSeatDto } from "./dto/update-session-seat.dto";
 import { EventsService } from "./events.service";
 
 @ApiTags("events-admin")
@@ -162,6 +164,51 @@ export class EventsAdminController {
   ) {
     await this.eventsService.deleteSession(tenantId, eventId, eventDayId, sessionId);
   }
+
+  @Post(":eventId/days/:eventDayId/sessions/:sessionId/seats")
+  createSessionSeat(
+    @Param("tenantId", ParseUUIDPipe) tenantId: string,
+    @Param("eventId", ParseUUIDPipe) eventId: string,
+    @Param("eventDayId", ParseUUIDPipe) eventDayId: string,
+    @Param("sessionId", ParseUUIDPipe) sessionId: string,
+    @Body() dto: CreateSessionSeatDto
+  ) {
+    return this.eventsService.createSessionSeat(tenantId, eventId, eventDayId, sessionId, dto);
+  }
+
+  @Get(":eventId/days/:eventDayId/sessions/:sessionId/seats")
+  listSessionSeats(
+    @Param("tenantId", ParseUUIDPipe) tenantId: string,
+    @Param("eventId", ParseUUIDPipe) eventId: string,
+    @Param("eventDayId", ParseUUIDPipe) eventDayId: string,
+    @Param("sessionId", ParseUUIDPipe) sessionId: string
+  ) {
+    return this.eventsService.listSessionSeats(tenantId, eventId, eventDayId, sessionId);
+  }
+
+  @Patch(":eventId/days/:eventDayId/sessions/:sessionId/seats/:seatId")
+  updateSessionSeat(
+    @Param("tenantId", ParseUUIDPipe) tenantId: string,
+    @Param("eventId", ParseUUIDPipe) eventId: string,
+    @Param("eventDayId", ParseUUIDPipe) eventDayId: string,
+    @Param("sessionId", ParseUUIDPipe) sessionId: string,
+    @Param("seatId", ParseUUIDPipe) seatId: string,
+    @Body() dto: UpdateSessionSeatDto
+  ) {
+    return this.eventsService.updateSessionSeat(tenantId, eventId, eventDayId, sessionId, seatId, dto);
+  }
+
+  @Delete(":eventId/days/:eventDayId/sessions/:sessionId/seats/:seatId")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteSessionSeat(
+    @Param("tenantId", ParseUUIDPipe) tenantId: string,
+    @Param("eventId", ParseUUIDPipe) eventId: string,
+    @Param("eventDayId", ParseUUIDPipe) eventDayId: string,
+    @Param("sessionId", ParseUUIDPipe) sessionId: string,
+    @Param("seatId", ParseUUIDPipe) seatId: string
+  ) {
+    await this.eventsService.deleteSessionSeat(tenantId, eventId, eventDayId, sessionId, seatId);
+  }
 }
 
 @ApiTags("events")
@@ -180,5 +227,16 @@ export class EventsPublicController {
   @Get(":eventId")
   getPublicEvent(@Param("eventId", ParseUUIDPipe) eventId: string) {
     return this.eventsService.getPublicEvent(eventId);
+  }
+}
+
+@ApiTags("sessions")
+@Controller("sessions")
+export class SessionsPublicController {
+  constructor(private readonly eventsService: EventsService) {}
+
+  @Get(":sessionId/seats")
+  getPublicSessionSeats(@Param("sessionId", ParseUUIDPipe) sessionId: string) {
+    return this.eventsService.getPublicSessionSeats(sessionId);
   }
 }

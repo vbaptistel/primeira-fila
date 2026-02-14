@@ -5,13 +5,15 @@ import {
   NotFoundException
 } from "@nestjs/common";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
-import { EventDayStatus, EventStatus, SessionStatus } from "@prisma/client";
+import { EventDayStatus, EventStatus, SessionSeatStatus, SessionStatus } from "@prisma/client";
 import { CreateEventDayDto } from "./dto/create-event-day.dto";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { CreateSessionDto } from "./dto/create-session.dto";
+import { CreateSessionSeatDto } from "./dto/create-session-seat.dto";
 import { UpdateEventDayDto } from "./dto/update-event-day.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { UpdateSessionDto } from "./dto/update-session.dto";
+import { UpdateSessionSeatDto } from "./dto/update-session-seat.dto";
 
 type SessionTimeline = {
   startsAt: Date;
@@ -296,6 +298,89 @@ export class EventsService {
     });
   }
 
+  async createSessionSeat(
+    tenantId: string,
+    eventId: string,
+    eventDayId: string,
+    sessionId: string,
+    dto: CreateSessionSeatDto
+  ) {
+    await this.getSession(tenantId, eventId, eventDayId, sessionId);
+
+    try {
+      return await this.prisma.sessionSeat.create({
+        data: {
+          tenantId,
+          sessionId,
+          sectorCode: dto.sectorCode,
+          rowLabel: dto.rowLabel,
+          seatNumber: dto.seatNumber,
+          status: dto.status ?? SessionSeatStatus.AVAILABLE
+        }
+      });
+    } catch (error) {
+      this.handleWriteError(
+        error,
+        "Assento ja cadastrado para esta sessao com o mesmo setor, fileira e numero."
+      );
+    }
+  }
+
+  async listSessionSeats(
+    tenantId: string,
+    eventId: string,
+    eventDayId: string,
+    sessionId: string
+  ) {
+    await this.getSession(tenantId, eventId, eventDayId, sessionId);
+
+    return this.prisma.sessionSeat.findMany({
+      where: {
+        tenantId,
+        sessionId
+      },
+      orderBy: [{ sectorCode: "asc" }, { rowLabel: "asc" }, { seatNumber: "asc" }]
+    });
+  }
+
+  async updateSessionSeat(
+    tenantId: string,
+    eventId: string,
+    eventDayId: string,
+    sessionId: string,
+    seatId: string,
+    dto: UpdateSessionSeatDto
+  ) {
+    await this.getSession(tenantId, eventId, eventDayId, sessionId);
+    await this.ensureSessionSeatScope(tenantId, sessionId, seatId);
+
+    try {
+      return await this.prisma.sessionSeat.update({
+        where: { id: seatId },
+        data: {
+          status: dto.status
+        }
+      });
+    } catch (error) {
+      this.handleWriteError(error, "Falha ao atualizar status do assento.");
+    }
+  }
+
+  async deleteSessionSeat(
+    tenantId: string,
+    eventId: string,
+    eventDayId: string,
+    sessionId: string,
+    seatId: string
+  ) {
+    await this.getSession(tenantId, eventId, eventDayId, sessionId);
+    await this.ensureSessionSeatScope(tenantId, sessionId, seatId);
+
+    await this.prisma.sessionSeat.delete({
+      where: { id: seatId }
+    });
+  }
+
   async listPublicEvents(limit = 20) {
     const safeLimit = this.normalizeLimit(limit);
 
@@ -387,6 +472,31 @@ export class EventsService {
     return event;
   }
 
+  async getPublicSessionSeats(sessionId: string) {
+    const session = await this.prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        status: SessionStatus.PUBLISHED,
+        event: {
+          status: {
+            not: EventStatus.ARCHIVED
+          }
+        }
+      }
+    });
+
+    if (!session) {
+      throw new NotFoundException("Sessao nao encontrada ou indisponivel para publicacao.");
+    }
+
+    return this.prisma.sessionSeat.findMany({
+      where: {
+        sessionId
+      },
+      orderBy: [{ sectorCode: "asc" }, { rowLabel: "asc" }, { seatNumber: "asc" }]
+    });
+  }
+
   private async ensureEventScope(tenantId: string, eventId: string) {
     const event = await this.prisma.event.findFirst({
       where: {
@@ -416,6 +526,22 @@ export class EventsService {
     }
 
     return eventDay;
+  }
+
+  private async ensureSessionSeatScope(tenantId: string, sessionId: string, seatId: string) {
+    const seat = await this.prisma.sessionSeat.findFirst({
+      where: {
+        id: seatId,
+        tenantId,
+        sessionId
+      }
+    });
+
+    if (!seat) {
+      throw new NotFoundException("Assento nao encontrado para o escopo informado.");
+    }
+
+    return seat;
   }
 
   private toDateOnly(date: string): Date {

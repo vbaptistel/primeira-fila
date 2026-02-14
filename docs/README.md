@@ -60,6 +60,7 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 - Integrações externas podem exigir refinamentos de contrato.
 
 ## Changelog
+- `v3.5.0` - 2026-02-14 - Avanço da Sprint 03 com conclusão da `TASK-007` (mapa de assentos por sessão e endpoint público de assentos).
 - `v3.4.0` - 2026-02-14 - Baseline de segurança do Supabase reforçado com padrão automático para novas tabelas (RLS, FORCE RLS e revoke para `anon`/`authenticated`).
 - `v3.3.0` - 2026-02-14 - Avanço da Sprint 03 com conclusão da `TASK-006` (módulo de eventos/dias/sessões no backend).
 - `v3.2.0` - 2026-02-14 - Evidência de smoke test pós-deploy registrada com backend em produção aprovado.

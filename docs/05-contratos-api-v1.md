@@ -88,6 +88,11 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
   - `GET /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}`
   - `PATCH /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}`
   - `DELETE /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}`
+- `SessionSeat`:
+  - `POST /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}/seats`
+  - `GET /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}/seats`
+  - `PATCH /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}/seats/{seat_id}`
+  - `DELETE /v1/tenants/{tenant_id}/events/{event_id}/days/{event_day_id}/sessions/{session_id}/seats/{seat_id}`
 
 ## Fluxo Padrão de Checkout
 1. `POST /v1/sessions/{session_id}/holds`
@@ -178,6 +183,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.6.0` - 2026-02-14 - Inclusão dos endpoints administrativos de `SessionSeat` no catálogo por sessão.
 - `v1.5.0` - 2026-02-14 - Inclusão dos endpoints de catálogo de organizador (`Event`, `EventDay`, `Session`) no contrato v1.
 - `v1.4.0` - 2026-02-14 - Alinhamento de autenticação para Supabase Auth como provider de identidade.
 - `v1.3.0` - 2026-02-14 - Regra explícita de fallback para política default (`platform_default_v1`).
