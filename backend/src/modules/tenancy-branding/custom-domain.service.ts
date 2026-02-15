@@ -21,6 +21,14 @@ type DnsInstruction = {
   purpose: string;
 };
 
+type VercelDomainConfigResponse = {
+  configuredBy: "CNAME" | "A" | "http" | "dns-01" | null;
+  acceptedChallenges?: string[];
+  recommendedIPv4?: Array<{ rank: number; value: string[] }>;
+  recommendedCNAME?: Array<{ rank: number; value: string }>;
+  misconfigured: boolean;
+};
+
 @Injectable()
 export class CustomDomainService {
   private readonly logger = new Logger(CustomDomainService.name);
@@ -69,7 +77,17 @@ export class CustomDomainService {
       }
     }
 
-    return this.buildDomainStatus(domain, "PENDING_VERIFICATION", null);
+    return await this.buildDomainStatus(domain, "PENDING_VERIFICATION", null);
+  }
+
+  async getDnsInstructions(domain: string): Promise<DnsInstruction[]> {
+    if (!this.isVercelConfigured()) {
+      throw new BadRequestException(
+        "Configuracao Vercel ausente. Configure VERCEL_TOKEN e VERCEL_WEB_CUSTOMER_PROJECT_ID para usar dominios customizados."
+      );
+    }
+    const { dnsInstructions } = await this.vercelGetDomainConfig(domain);
+    return dnsInstructions;
   }
 
   async removeDomain(tenantId: string): Promise<void> {
@@ -112,7 +130,7 @@ export class CustomDomainService {
     }
 
     if (tenant.customDomainStatus === "VERIFIED") {
-      return this.buildDomainStatus(
+      return await this.buildDomainStatus(
         tenant.customDomain,
         "VERIFIED",
         tenant.customDomainVerifiedAt
@@ -120,7 +138,7 @@ export class CustomDomainService {
     }
 
     if (!this.isVercelConfigured()) {
-      return this.buildDomainStatus(
+      return await this.buildDomainStatus(
         tenant.customDomain,
         tenant.customDomainStatus ?? "PENDING_VERIFICATION",
         tenant.customDomainVerifiedAt
@@ -128,7 +146,9 @@ export class CustomDomainService {
     }
 
     try {
-      const verified = await this.vercelVerifyDomain(tenant.customDomain);
+      const { verified, dnsInstructions } = await this.vercelGetDomainConfig(
+        tenant.customDomain
+      );
 
       if (verified) {
         const now = new Date();
@@ -146,7 +166,7 @@ export class CustomDomainService {
           `Dominio ${tenant.customDomain} verificado com sucesso para tenant ${tenantId}.`
         );
 
-        return this.buildDomainStatus(tenant.customDomain, "VERIFIED", now);
+        return await this.buildDomainStatus(tenant.customDomain, "VERIFIED", now);
       }
 
       if (tenant.customDomainStatus !== "PENDING_VERIFICATION") {
@@ -156,10 +176,11 @@ export class CustomDomainService {
         });
       }
 
-      return this.buildDomainStatus(
+      return await this.buildDomainStatus(
         tenant.customDomain,
         "PENDING_VERIFICATION",
-        null
+        null,
+        dnsInstructions
       );
     } catch (error) {
       this.logger.warn(
@@ -171,7 +192,12 @@ export class CustomDomainService {
         data: { customDomainStatus: "FAILED" }
       });
 
-      return this.buildDomainStatus(tenant.customDomain, "FAILED", null);
+      return await this.buildDomainStatus(
+        tenant.customDomain,
+        "FAILED",
+        null,
+        []
+      );
     }
   }
 
@@ -187,22 +213,11 @@ export class CustomDomainService {
       };
     }
 
-    return this.buildDomainStatus(
+    return await this.buildDomainStatus(
       tenant.customDomain,
       tenant.customDomainStatus ?? "PENDING_VERIFICATION",
       tenant.customDomainVerifiedAt
     );
-  }
-
-  getDnsInstructions(domain: string): DnsInstruction[] {
-    return [
-      {
-        type: "CNAME",
-        name: domain,
-        value: "cname.vercel-dns.com",
-        purpose: "Apontar o dominio para a Vercel. Configure este registro no seu provedor de DNS."
-      }
-    ];
   }
 
   // --- Vercel SDK integration ---
@@ -242,28 +257,85 @@ export class CustomDomainService {
     }
   }
 
-  private async vercelVerifyDomain(domain: string): Promise<boolean> {
+  private async vercelGetDomainConfig(
+    domain: string
+  ): Promise<{
+    verified: boolean;
+    dnsInstructions: DnsInstruction[];
+  }> {
+    const path = `/v6/domains/${encodeURIComponent(domain)}/config`;
     const url = this.buildVercelUrl(
-      `/v9/projects/${this.vercelProjectId}/domains/${encodeURIComponent(domain)}/verify`
+      path,
+      this.vercelProjectId ? { projectIdOrName: this.vercelProjectId } : undefined
     );
 
     const response = await fetch(url, {
-      method: "POST",
+      method: "GET",
       headers: this.buildVercelHeaders()
     });
 
     if (!response.ok) {
-      return false;
+      throw new Error(`Vercel getDomainConfig falhou (${response.status}): ${await response.text()}`);
     }
 
-    const data = (await response.json()) as { verified?: boolean; };
-    return data.verified === true;
+    const data = (await response.json()) as VercelDomainConfigResponse;
+    const verified = data.misconfigured === false;
+
+    const dnsInstructions = this.buildDnsInstructionsFromConfig(domain, data);
+    return { verified, dnsInstructions };
   }
 
-  private buildVercelUrl(path: string): string {
+  private buildDnsInstructionsFromConfig(
+    domain: string,
+    config: VercelDomainConfigResponse
+  ): DnsInstruction[] {
+    const instructions: DnsInstruction[] = [];
+
+    const cnameRank1 = config.recommendedCNAME?.find((r) => r.rank === 1);
+    if (cnameRank1?.value) {
+      instructions.push({
+        type: "CNAME",
+        name: domain,
+        value: cnameRank1.value,
+        purpose: "Apontar o dominio para a Vercel. Configure este registro no seu provedor de DNS."
+      });
+    }
+
+    const ipv4Rank1 = config.recommendedIPv4?.find((r) => r.rank === 1);
+    if (ipv4Rank1?.value?.length) {
+      const value = Array.isArray(ipv4Rank1.value)
+        ? ipv4Rank1.value[0]
+        : String(ipv4Rank1.value);
+      instructions.push({
+        type: "A",
+        name: domain,
+        value,
+        purpose: "Apontar o dominio para a Vercel. Configure este registro no seu provedor de DNS."
+      });
+    }
+
+    if (instructions.length === 0) {
+      throw new Error(
+        `Vercel nao retornou instrucoes DNS (CNAME ou A) para o dominio ${domain}.`
+      );
+    }
+    return instructions;
+  }
+
+  private buildVercelUrl(
+    path: string,
+    extraParams?: Record<string, string>
+  ): string {
     const base = "https://api.vercel.com";
-    const teamParam = this.vercelTeamId ? `?teamId=${this.vercelTeamId}` : "";
-    return `${base}${path}${teamParam}`;
+    const params = new URLSearchParams();
+    if (this.vercelTeamId) params.set("teamId", this.vercelTeamId);
+    if (extraParams) {
+      for (const [k, v] of Object.entries(extraParams)) {
+        if (v) params.set(k, v);
+      }
+    }
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return `${base}${path}${query}`;
   }
 
   private buildVercelHeaders(): Record<string, string> {
@@ -273,13 +345,16 @@ export class CustomDomainService {
     };
   }
 
-  private buildDomainStatus(
+  private async buildDomainStatus(
     domain: string,
     status: string,
-    verifiedAt: Date | null
-  ): DomainStatusOutput {
+    verifiedAt: Date | null,
+    dnsInstructionsOverride?: DnsInstruction[] | null
+  ): Promise<DomainStatusOutput> {
     const dnsInstructions =
-      status === "VERIFIED" ? null : this.getDnsInstructions(domain);
+      status === "VERIFIED"
+        ? null
+        : (dnsInstructionsOverride ?? (await this.getDnsInstructions(domain)));
 
     return {
       domain,

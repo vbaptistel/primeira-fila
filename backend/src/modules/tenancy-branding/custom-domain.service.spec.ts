@@ -30,6 +30,34 @@ const TENANT_FIXTURE = {
   isActive: true
 };
 
+const VERCEL_DOMAIN_CONFIG_RESPONSE = {
+  configuredBy: null,
+  misconfigured: true,
+  recommendedCNAME: [{ rank: 1, value: "cname.vercel-dns.com" }],
+  recommendedIPv4: []
+};
+
+function setupVercelWithMockedFetch() {
+  process.env.VERCEL_TOKEN = "test-token";
+  process.env.VERCEL_WEB_CUSTOMER_PROJECT_ID = "prj_test";
+
+  vi.spyOn(globalThis, "fetch").mockImplementation((input) => {
+    const url = typeof input === "string" ? input : (input as Request).url;
+    if (url.includes("/v6/domains/") && url.includes("/config")) {
+      return Promise.resolve(
+        new Response(JSON.stringify(VERCEL_DOMAIN_CONFIG_RESPONSE), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        })
+      ) as Promise<Response>;
+    }
+    if (url.includes("/v10/projects/") && url.includes("/domains")) {
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 })) as Promise<Response>;
+    }
+    return Promise.resolve(new Response("{}", { status: 200 })) as Promise<Response>;
+  });
+}
+
 describe("CustomDomainService", () => {
   let service: CustomDomainService;
   let prisma: ReturnType<typeof createMockPrisma>;
@@ -57,10 +85,15 @@ describe("CustomDomainService", () => {
 
   describe("addDomain", () => {
     it("deve adicionar dominio customizado com status PENDING_VERIFICATION", async () => {
+      setupVercelWithMockedFetch();
+      const svc = new CustomDomainService(
+        prisma as unknown as PrismaService,
+        tenancyBranding as unknown as TenancyBrandingService
+      );
       vi.mocked(tenancyBranding.getTenant).mockResolvedValue(TENANT_FIXTURE as never);
       vi.mocked(prisma.tenant.update).mockResolvedValue({} as never);
 
-      const result = await service.addDomain(TENANT_FIXTURE.id, "ingressos.acme.com.br");
+      const result = await svc.addDomain(TENANT_FIXTURE.id, "ingressos.acme.com.br");
 
       expect(result.domain).toBe("ingressos.acme.com.br");
       expect(result.status).toBe("PENDING_VERIFICATION");
@@ -78,6 +111,15 @@ describe("CustomDomainService", () => {
       });
     });
 
+    it("deve lancar BadRequestException quando Vercel nao configurada", async () => {
+      vi.mocked(tenancyBranding.getTenant).mockResolvedValue(TENANT_FIXTURE as never);
+      vi.mocked(prisma.tenant.update).mockResolvedValue({} as never);
+
+      await expect(service.addDomain(TENANT_FIXTURE.id, "ingressos.acme.com.br")).rejects.toThrow(
+        BadRequestException
+      );
+    });
+
     it("deve rejeitar se tenant ja possui dominio diferente", async () => {
       const tenantWithDomain = {
         ...TENANT_FIXTURE,
@@ -91,6 +133,11 @@ describe("CustomDomainService", () => {
     });
 
     it("deve permitir re-adicionar o mesmo dominio", async () => {
+      setupVercelWithMockedFetch();
+      const svc = new CustomDomainService(
+        prisma as unknown as PrismaService,
+        tenancyBranding as unknown as TenancyBrandingService
+      );
       const tenantWithDomain = {
         ...TENANT_FIXTURE,
         customDomain: "ingressos.acme.com.br"
@@ -98,7 +145,7 @@ describe("CustomDomainService", () => {
       vi.mocked(tenancyBranding.getTenant).mockResolvedValue(tenantWithDomain as never);
       vi.mocked(prisma.tenant.update).mockResolvedValue({} as never);
 
-      const result = await service.addDomain(TENANT_FIXTURE.id, "ingressos.acme.com.br");
+      const result = await svc.addDomain(TENANT_FIXTURE.id, "ingressos.acme.com.br");
       expect(result.domain).toBe("ingressos.acme.com.br");
     });
   });
@@ -159,7 +206,7 @@ describe("CustomDomainService", () => {
       await expect(service.verifyDomain(TENANT_FIXTURE.id)).rejects.toThrow(NotFoundException);
     });
 
-    it("deve retornar status pendente quando Vercel nao configurada", async () => {
+    it("deve lancar BadRequestException quando Vercel nao configurada e dominio pendente", async () => {
       const pendingTenant = {
         ...TENANT_FIXTURE,
         customDomain: "ingressos.acme.com.br",
@@ -167,10 +214,7 @@ describe("CustomDomainService", () => {
       };
       vi.mocked(tenancyBranding.getTenant).mockResolvedValue(pendingTenant as never);
 
-      const result = await service.verifyDomain(TENANT_FIXTURE.id);
-
-      expect(result.status).toBe("PENDING_VERIFICATION");
-      expect(result.dnsInstructions).toBeTruthy();
+      await expect(service.verifyDomain(TENANT_FIXTURE.id)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -187,7 +231,7 @@ describe("CustomDomainService", () => {
       expect(result.dnsInstructions).toBeNull();
     });
 
-    it("deve retornar status com instrucoes DNS quando pendente", async () => {
+    it("deve lancar BadRequestException quando Vercel nao configurada e status pendente", async () => {
       const pendingTenant = {
         ...TENANT_FIXTURE,
         customDomain: "ingressos.acme.com.br",
@@ -195,7 +239,23 @@ describe("CustomDomainService", () => {
       };
       vi.mocked(tenancyBranding.getTenant).mockResolvedValue(pendingTenant as never);
 
-      const result = await service.getDomainStatus(TENANT_FIXTURE.id);
+      await expect(service.getDomainStatus(TENANT_FIXTURE.id)).rejects.toThrow(BadRequestException);
+    });
+
+    it("deve retornar status com instrucoes DNS quando pendente", async () => {
+      setupVercelWithMockedFetch();
+      const svc = new CustomDomainService(
+        prisma as unknown as PrismaService,
+        tenancyBranding as unknown as TenancyBrandingService
+      );
+      const pendingTenant = {
+        ...TENANT_FIXTURE,
+        customDomain: "ingressos.acme.com.br",
+        customDomainStatus: "PENDING_VERIFICATION"
+      };
+      vi.mocked(tenancyBranding.getTenant).mockResolvedValue(pendingTenant as never);
+
+      const result = await svc.getDomainStatus(TENANT_FIXTURE.id);
 
       expect(result.domain).toBe("ingressos.acme.com.br");
       expect(result.status).toBe("PENDING_VERIFICATION");
@@ -223,8 +283,20 @@ describe("CustomDomainService", () => {
   // --- getDnsInstructions ---
 
   describe("getDnsInstructions", () => {
-    it("deve retornar instrucao CNAME para dominio", () => {
-      const instructions = service.getDnsInstructions("ingressos.acme.com.br");
+    it("deve lancar BadRequestException quando Vercel nao configurada", async () => {
+      await expect(
+        service.getDnsInstructions("ingressos.acme.com.br")
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("deve retornar instrucao CNAME da Vercel quando configurada", async () => {
+      setupVercelWithMockedFetch();
+      const svc = new CustomDomainService(
+        prisma as unknown as PrismaService,
+        tenancyBranding as unknown as TenancyBrandingService
+      );
+
+      const instructions = await svc.getDnsInstructions("ingressos.acme.com.br");
 
       expect(instructions).toHaveLength(1);
       expect(instructions[0]).toEqual({
