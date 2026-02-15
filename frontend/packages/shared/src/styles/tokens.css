@@ -5,6 +5,10 @@
   --pf-color-muted-text: #45635e;
   --pf-color-primary: #0f766e;
   --pf-color-primary-text: #f3fffd;
+  --pf-color-accent: #3B82F6;
+  --pf-color-accent-text: #ffffff;
+  --pf-color-danger: #dc2626;
+  --pf-color-danger-text: #ffffff;
   --pf-color-border: #c9ddd8;
 
   --pf-radius-sm: 8px;

@@ -6,6 +6,10 @@ export const tokens = {
     mutedText: "#45635e",
     primary: "#0f766e",
     primaryText: "#f3fffd",
+    accent: "#3B82F6",
+    accentText: "#ffffff",
+    danger: "#dc2626",
+    dangerText: "#ffffff",
     border: "#c9ddd8"
   },
   radius: {
