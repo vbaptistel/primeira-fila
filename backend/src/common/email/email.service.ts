@@ -4,7 +4,7 @@ import { render } from "@react-email/render";
 import { EmailStatus } from "../../generated/prisma/client";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { RESEND_CLIENT } from "./resend.provider";
-import { OrderConfirmationEmail } from "./templates/order-confirmation";
+import { OrderConfirmationEmail, TenantBranding } from "./templates/order-confirmation";
 
 type OrderEmailData = {
   tenantId: string;
@@ -52,6 +52,8 @@ export class EmailService {
     });
 
     try {
+      const branding = await this.loadTenantBranding(data.tenantId);
+
       const html = await render(
         OrderConfirmationEmail({
           buyerName: data.buyerName,
@@ -61,7 +63,8 @@ export class EmailService {
           serviceFeeCents: data.serviceFeeCents,
           totalAmountCents: data.totalAmountCents,
           currencyCode: data.currencyCode,
-          tickets: data.tickets
+          tickets: data.tickets,
+          branding
         })
       );
 
@@ -171,5 +174,39 @@ export class EmailService {
       orderBy: { createdAt: "desc" },
       take: 50
     });
+  }
+
+  private async loadTenantBranding(tenantId: string): Promise<TenantBranding | undefined> {
+    try {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: {
+          name: true,
+          logoUrl: true,
+          primaryColor: true,
+          footerText: true,
+          termsUrl: true,
+          privacyUrl: true
+        }
+      });
+
+      if (!tenant) {
+        return undefined;
+      }
+
+      return {
+        tenantName: tenant.name,
+        logoUrl: tenant.logoUrl,
+        primaryColor: tenant.primaryColor,
+        footerText: tenant.footerText,
+        termsUrl: tenant.termsUrl,
+        privacyUrl: tenant.privacyUrl
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Nao foi possivel carregar branding do tenant ${tenantId}: ${String(error)}`
+      );
+      return undefined;
+    }
   }
 }

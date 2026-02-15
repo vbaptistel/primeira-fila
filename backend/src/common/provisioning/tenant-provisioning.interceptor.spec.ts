@@ -3,6 +3,7 @@ import { CallHandler, ExecutionContext } from "@nestjs/common";
 import { of } from "rxjs";
 import { TenantProvisioningInterceptor } from "./tenant-provisioning.interceptor";
 import { CommercialPoliciesService } from "../../modules/commercial-policies/commercial-policies.service";
+import { TenancyBrandingService } from "../../modules/tenancy-branding/tenancy-branding.service";
 
 function createMockExecutionContext(authPrincipal?: { tenantId?: string }): ExecutionContext {
   const request: Record<string, unknown> = {
@@ -25,6 +26,7 @@ function createMockCallHandler(): CallHandler {
 describe("TenantProvisioningInterceptor", () => {
   let interceptor: TenantProvisioningInterceptor;
   let commercialPoliciesService: CommercialPoliciesService;
+  let tenancyBrandingService: TenancyBrandingService;
 
   beforeEach(() => {
     commercialPoliciesService = {
@@ -34,7 +36,14 @@ describe("TenantProvisioningInterceptor", () => {
       })
     } as unknown as CommercialPoliciesService;
 
-    interceptor = new TenantProvisioningInterceptor(commercialPoliciesService);
+    tenancyBrandingService = {
+      getTenantOrNull: vi.fn().mockResolvedValue(null)
+    } as unknown as TenancyBrandingService;
+
+    interceptor = new TenantProvisioningInterceptor(
+      commercialPoliciesService,
+      tenancyBrandingService
+    );
   });
 
   it("nao deve provisionar quando nao ha authPrincipal na request", () => {

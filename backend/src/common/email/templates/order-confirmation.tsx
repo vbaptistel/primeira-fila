@@ -7,6 +7,7 @@ import {
   Hr,
   Html,
   Img,
+  Link,
   Preview,
   Row,
   Section,
@@ -22,6 +23,15 @@ type TicketInfo = {
   seatNumber: number;
 };
 
+export type TenantBranding = {
+  tenantName: string;
+  logoUrl?: string | null;
+  primaryColor: string;
+  footerText?: string | null;
+  termsUrl?: string | null;
+  privacyUrl?: string | null;
+};
+
 type OrderConfirmationProps = {
   buyerName: string;
   orderId: string;
@@ -31,6 +41,7 @@ type OrderConfirmationProps = {
   totalAmountCents: number;
   currencyCode: string;
   tickets: TicketInfo[];
+  branding?: TenantBranding;
 };
 
 function formatCurrency(cents: number, currencyCode: string): string {
@@ -52,16 +63,33 @@ export function OrderConfirmationEmail(props: OrderConfirmationProps) {
     serviceFeeCents = 0,
     totalAmountCents = 0,
     currencyCode = "BRL",
-    tickets = []
+    tickets = [],
+    branding
   } = props;
+
+  const brandColor = branding?.primaryColor ?? "#1a1a1a";
+  const brandHeadingStyle: React.CSSProperties = { ...headingStyle, color: brandColor };
 
   return (
     <Html>
       <Head />
-      <Preview>Confirmacao de compra - {sessionName}</Preview>
+      <Preview>
+        Confirmacao de compra{branding?.tenantName ? ` - ${branding.tenantName}` : ""} - {sessionName}
+      </Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
-          <Heading style={headingStyle}>Compra confirmada!</Heading>
+          {branding?.logoUrl && (
+            <Section style={logoSectionStyle}>
+              <Img
+                src={branding.logoUrl}
+                width={160}
+                height={48}
+                alt={branding.tenantName ?? "Logo"}
+                style={logoStyle}
+              />
+            </Section>
+          )}
+          <Heading style={brandHeadingStyle}>Compra confirmada!</Heading>
           <Text style={textStyle}>Ola, {buyerName}!</Text>
           <Text style={textStyle}>
             Sua compra foi confirmada com sucesso. Abaixo estao os detalhes do seu pedido e os
@@ -133,9 +161,27 @@ export function OrderConfirmationEmail(props: OrderConfirmationProps) {
           </Section>
 
           <Hr style={hrStyle} />
+          {branding?.footerText && (
+            <Text style={footerStyle}>{branding.footerText}</Text>
+          )}
           <Text style={footerStyle}>
             Este e-mail foi enviado automaticamente. Nao responda a esta mensagem.
           </Text>
+          {(branding?.termsUrl || branding?.privacyUrl) && (
+            <Text style={footerLinksStyle}>
+              {branding.termsUrl && (
+                <Link href={branding.termsUrl} style={footerLinkStyle}>
+                  Termos de uso
+                </Link>
+              )}
+              {branding.termsUrl && branding.privacyUrl && " | "}
+              {branding.privacyUrl && (
+                <Link href={branding.privacyUrl} style={footerLinkStyle}>
+                  Politica de privacidade
+                </Link>
+              )}
+            </Text>
+          )}
         </Container>
       </Body>
     </Html>
@@ -153,6 +199,16 @@ const containerStyle: React.CSSProperties = {
   padding: "32px",
   maxWidth: "600px",
   borderRadius: "8px"
+};
+
+const logoSectionStyle: React.CSSProperties = {
+  textAlign: "center" as const,
+  margin: "0 0 24px"
+};
+
+const logoStyle: React.CSSProperties = {
+  display: "inline-block",
+  objectFit: "contain" as const
 };
 
 const headingStyle: React.CSSProperties = {
@@ -235,9 +291,20 @@ const hrStyle: React.CSSProperties = {
 const footerStyle: React.CSSProperties = {
   color: "#9ca3af",
   fontSize: "12px",
-  textAlign: "center" as const
-  ,
+  textAlign: "center" as const,
   margin: "16px 0 0"
+};
+
+const footerLinksStyle: React.CSSProperties = {
+  color: "#9ca3af",
+  fontSize: "12px",
+  textAlign: "center" as const,
+  margin: "8px 0 0"
+};
+
+const footerLinkStyle: React.CSSProperties = {
+  color: "#9ca3af",
+  textDecoration: "underline"
 };
 
 OrderConfirmationEmail.PreviewProps = {
@@ -263,7 +330,15 @@ OrderConfirmationEmail.PreviewProps = {
       seatRow: "A",
       seatNumber: 13
     }
-  ]
+  ],
+  branding: {
+    tenantName: "Acme Eventos",
+    logoUrl: "https://placehold.co/320x96/000000/FFFFFF?text=ACME",
+    primaryColor: "#6366f1",
+    footerText: "Acme Eventos - Sua experiencia, nosso compromisso.",
+    termsUrl: "https://acme-eventos.com/termos",
+    privacyUrl: "https://acme-eventos.com/privacidade"
+  }
 } as OrderConfirmationProps;
 
 export default OrderConfirmationEmail;

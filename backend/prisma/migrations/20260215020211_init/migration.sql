@@ -25,6 +25,43 @@ CREATE TYPE "PaymentMethod" AS ENUM ('PIX', 'CREDIT_CARD', 'DEBIT_CARD');
 -- CreateEnum
 CREATE TYPE "TicketStatus" AS ENUM ('VALID', 'USED', 'CANCELLED');
 
+-- CreateEnum
+CREATE TYPE "RefundStatus" AS ENUM ('REQUESTED', 'APPROVED', 'DENIED');
+
+-- CreateEnum
+CREATE TYPE "AuditAction" AS ENUM ('CHECK_IN', 'REFUND_REQUESTED', 'REFUND_APPROVED', 'REFUND_DENIED');
+
+-- CreateEnum
+CREATE TYPE "EmailStatus" AS ENUM ('SENT', 'FAILED', 'PENDING');
+
+-- CreateEnum
+CREATE TYPE "CustomDomainStatus" AS ENUM ('PENDING_VERIFICATION', 'VERIFIED', 'FAILED', 'REMOVED');
+
+-- CreateTable
+CREATE TABLE "tenants" (
+    "id" UUID NOT NULL,
+    "name" VARCHAR(160) NOT NULL,
+    "slug" VARCHAR(80) NOT NULL,
+    "subdomain" VARCHAR(63) NOT NULL,
+    "logo_url" VARCHAR(500),
+    "favicon_url" VARCHAR(500),
+    "primary_color" VARCHAR(9) NOT NULL DEFAULT '#000000',
+    "secondary_color" VARCHAR(9) NOT NULL DEFAULT '#FFFFFF',
+    "accent_color" VARCHAR(9) NOT NULL DEFAULT '#3B82F6',
+    "footer_text" VARCHAR(500),
+    "terms_url" VARCHAR(500),
+    "privacy_url" VARCHAR(500),
+    "social_links" JSONB,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "custom_domain" VARCHAR(255),
+    "custom_domain_status" "CustomDomainStatus",
+    "custom_domain_verified_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+
+    CONSTRAINT "tenants_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateTable
 CREATE TABLE "commercial_policies" (
     "id" UUID NOT NULL,
@@ -205,6 +242,64 @@ CREATE TABLE "tickets" (
     CONSTRAINT "tickets_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "refunds" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "order_id" UUID NOT NULL,
+    "payment_id" UUID NOT NULL,
+    "reason_code" VARCHAR(60) NOT NULL,
+    "reason_description" VARCHAR(500),
+    "amount_cents" INTEGER NOT NULL,
+    "status" "RefundStatus" NOT NULL DEFAULT 'REQUESTED',
+    "requested_by" UUID NOT NULL,
+    "processed_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+
+    CONSTRAINT "refunds_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "audit_logs" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "actor_id" UUID NOT NULL,
+    "action" "AuditAction" NOT NULL,
+    "resource_type" VARCHAR(60) NOT NULL,
+    "resource_id" UUID NOT NULL,
+    "metadata" JSONB,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_logs" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "order_id" UUID,
+    "to" VARCHAR(180) NOT NULL,
+    "subject" VARCHAR(255) NOT NULL,
+    "template_name" VARCHAR(80) NOT NULL,
+    "status" "EmailStatus" NOT NULL DEFAULT 'PENDING',
+    "error_message" VARCHAR(500),
+    "resend_message_id" VARCHAR(80),
+    "sent_at" TIMESTAMPTZ(6),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "email_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tenants_slug_key" ON "tenants"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tenants_subdomain_key" ON "tenants"("subdomain");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tenants_custom_domain_key" ON "tenants"("custom_domain");
+
 -- CreateIndex
 CREATE INDEX "commercial_policies_tenant_id_effective_from_idx" ON "commercial_policies"("tenant_id", "effective_from");
 
@@ -292,8 +387,38 @@ CREATE INDEX "tickets_tenant_id_order_id_idx" ON "tickets"("tenant_id", "order_i
 -- CreateIndex
 CREATE INDEX "tickets_order_id_status_idx" ON "tickets"("order_id", "status");
 
+-- CreateIndex
+CREATE INDEX "refunds_tenant_id_order_id_idx" ON "refunds"("tenant_id", "order_id");
+
+-- CreateIndex
+CREATE INDEX "refunds_order_id_status_idx" ON "refunds"("order_id", "status");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_tenant_id_action_idx" ON "audit_logs"("tenant_id", "action");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_resource_type_resource_id_idx" ON "audit_logs"("resource_type", "resource_id");
+
+-- CreateIndex
+CREATE INDEX "email_logs_tenant_id_status_idx" ON "email_logs"("tenant_id", "status");
+
+-- CreateIndex
+CREATE INDEX "email_logs_order_id_idx" ON "email_logs"("order_id");
+
+-- AddForeignKey
+ALTER TABLE "commercial_policies" ADD CONSTRAINT "commercial_policies_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "events" ADD CONSTRAINT "events_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "event_days" ADD CONSTRAINT "event_days_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
 -- AddForeignKey
 ALTER TABLE "event_days" ADD CONSTRAINT "event_days_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -302,7 +427,13 @@ ALTER TABLE "sessions" ADD CONSTRAINT "sessions_event_id_fkey" FOREIGN KEY ("eve
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_event_day_id_event_id_fkey" FOREIGN KEY ("event_day_id", "event_id") REFERENCES "event_days"("id", "event_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "session_seats" ADD CONSTRAINT "session_seats_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "session_seats" ADD CONSTRAINT "session_seats_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "session_holds" ADD CONSTRAINT "session_holds_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "session_holds" ADD CONSTRAINT "session_holds_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -314,10 +445,16 @@ ALTER TABLE "session_hold_seats" ADD CONSTRAINT "session_hold_seats_hold_id_fkey
 ALTER TABLE "session_hold_seats" ADD CONSTRAINT "session_hold_seats_seat_id_fkey" FOREIGN KEY ("seat_id") REFERENCES "session_seats"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "orders" ADD CONSTRAINT "orders_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "orders" ADD CONSTRAINT "orders_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "sessions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "orders" ADD CONSTRAINT "orders_hold_id_fkey" FOREIGN KEY ("hold_id") REFERENCES "session_holds"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "payments" ADD CONSTRAINT "payments_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "payments" ADD CONSTRAINT "payments_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -332,6 +469,9 @@ ALTER TABLE "order_items" ADD CONSTRAINT "order_items_session_id_fkey" FOREIGN K
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_seat_id_fkey" FOREIGN KEY ("seat_id") REFERENCES "session_seats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "tickets" ADD CONSTRAINT "tickets_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "tickets" ADD CONSTRAINT "tickets_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -342,3 +482,18 @@ ALTER TABLE "tickets" ADD CONSTRAINT "tickets_session_id_fkey" FOREIGN KEY ("ses
 
 -- AddForeignKey
 ALTER TABLE "tickets" ADD CONSTRAINT "tickets_seat_id_fkey" FOREIGN KEY ("seat_id") REFERENCES "session_seats"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "refunds" ADD CONSTRAINT "refunds_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "refunds" ADD CONSTRAINT "refunds_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "refunds" ADD CONSTRAINT "refunds_payment_id_fkey" FOREIGN KEY ("payment_id") REFERENCES "payments"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "email_logs" ADD CONSTRAINT "email_logs_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
