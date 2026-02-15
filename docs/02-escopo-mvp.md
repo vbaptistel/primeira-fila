@@ -53,7 +53,7 @@ O MVP busca validar venda e operação de ingressos ponta a ponta, com confiabil
 
 ## Regras de Operação
 - Check-in offline não é suportado no MVP.
-- Antifraude inicial inclui rate limit em login, checkout, pagamento e validação de QR.
+- Antifraude inicial inclui rate limit em login (backoffice), checkout, pagamento e validação de QR.
 - Repasse financeiro é executado fora da plataforma, com conciliação interna obrigatória.
 - Repasse considera apenas pedidos pagos sem pendência de reembolso ou chargeback na data de corte.
 - Tenant sem política customizada utiliza `platform_default_v1` até nova versão entrar em vigor.
@@ -71,6 +71,7 @@ O MVP busca validar venda e operação de ingressos ponta a ponta, com confiabil
 - Antifraude básico pode precisar de reforço após aumento de volume.
 
 ## Changelog
+- `v1.4.0` - 2026-02-15 - Antifraude: rate limit em login explicitado como backoffice (comprador não faz login no MVP).
 - `v1.3.0` - 2026-02-14 - Regra operacional de fallback para política comercial default por tenant.
 - `v1.2.0` - 2026-02-14 - Inclusão do vínculo obrigatório com políticas comerciais e regras de congelamento de taxa.
 - `v1.1.0` - 2026-02-14 - Ajuste de regra fina para timeout/expiração e critérios operacionais.

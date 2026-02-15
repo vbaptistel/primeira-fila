@@ -44,14 +44,15 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 
 ## Autenticação e Autorização
 - Supabase Auth como provider de identidade.
-- JWT do Supabase Auth para usuários autenticados.
-- Fluxos de login, refresh e logout realizados pelo provider (SDK), fora da API de domínio.
+- JWT do Supabase Auth para usuários autenticados (backoffice: operador, organizer admin, platform admin).
+- Fluxos de login, refresh e logout realizados pelo provider (SDK), fora da API de domínio; no MVP aplicam-se ao `web-backoffice`.
+- No MVP o comprador não faz login: acessa pedidos e ingressos via magic link (token no link), com validação por token + e-mail nos endpoints de ordem/tickets.
 - Escopo por tenant em todas as operações de organizador e operador.
 - RBAC:
   - `platform_admin`: escopo global.
   - `organizer_admin`: escopo do próprio tenant.
   - `operator`: check-in e consulta operacional do tenant.
-  - `buyer`: seus pedidos e ingressos.
+  - `buyer`: no MVP, acesso a pedidos/ingressos via magic link (sem JWT); papéis acima usam JWT.
 
 ## Endpoints Principais
 | Método | Endpoint | Auth | Papel mínimo |
@@ -204,6 +205,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.11.0` - 2026-02-15 - Autenticação: escopo de login/refresh/logout no MVP apenas para backoffice; comprador acessa pedidos/ingressos via magic link (token + e-mail), sem JWT; RBAC do buyer esclarecido.
 - `v1.10.0` - 2026-02-14 - Inclusão do endpoint `POST /v1/tenants/{tenant_id}/commercial-policy/versions` para versionamento de política por tenant.
 - `v1.9.0` - 2026-02-14 - Contrato de `POST /v1/orders/{order_id}/payments` detalhado com `Idempotency-Key`, método de pagamento e regra de confirmação síncrona aprovado/negado no MVP.
 - `v1.8.0` - 2026-02-14 - Refinamento do contrato de `POST /v1/orders` com header obrigatório `Idempotency-Key`, payload de comprador e resposta com snapshot financeiro do pedido.

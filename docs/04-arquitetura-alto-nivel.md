@@ -65,7 +65,7 @@ flowchart TD
 
 ## Segurança e Observabilidade
 - JWT emitido pelo Supabase Auth para autenticação.
-- RBAC por papel: `platform_admin`, `organizer_admin`, `operator`, `buyer`.
+- RBAC por papel: `platform_admin`, `organizer_admin`, `operator`, `buyer`. No MVP o comprador acessa pedidos/ingressos via magic link (sem login no Supabase).
 - TLS em trânsito e criptografia de dados sensíveis em repouso.
 - Logs estruturados com `trace_id` e monitoramento operacional em stack compatível com Vercel.
 
@@ -79,6 +79,7 @@ flowchart TD
 - Processamento totalmente síncrono pode elevar latência em integrações externas.
 
 ## Changelog
+- `v2.4.0` - 2026-02-15 - RBAC: nota de que no MVP o comprador acessa pedidos/ingressos via magic link, sem login no Supabase.
 - `v2.3.0` - 2026-02-14 - Adoção do Supabase Auth como provider de autenticação.
 - `v2.2.0` - 2026-02-14 - Atualização da persistência para PostgreSQL gerenciado no Supabase.
 - `v2.1.0` - 2026-02-14 - Ajuste de observabilidade para modelo de deploy backend na Vercel.
