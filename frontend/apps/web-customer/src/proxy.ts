@@ -27,8 +27,7 @@ export async function proxy(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
 
   try {
-    const response = await fetch(`${BACKEND_URL}/v1/public/tenants/resolve`, {
-      headers: { Host: host },
+    const response = await fetch(`${BACKEND_URL}/v1/public/tenants/resolve?domain=${host}`, {
       signal: AbortSignal.timeout(3000)
     });
 
