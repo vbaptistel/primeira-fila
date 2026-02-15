@@ -12,13 +12,12 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards
 } from "@nestjs/common";
-import { TenantAwareRequest } from "../../common/tenancy/tenant-resolver.middleware";
 import { ApiTags } from "@nestjs/swagger";
 import { TenantRbacGuard } from "../../common/auth/tenant-rbac.guard";
 import { TenantRoles } from "../../common/auth/roles.decorator";
+import { ResolvedTenantId } from "../../common/tenancy/tenant.decorator";
 import { CreateEventDayDto } from "./dto/create-event-day.dto";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { CreateHoldDto } from "./dto/create-hold.dto";
@@ -29,7 +28,6 @@ import { UpdateEventDto } from "./dto/update-event.dto";
 import { UpdateSessionDto } from "./dto/update-session.dto";
 import { UpdateSessionSeatDto } from "./dto/update-session-seat.dto";
 import { EventsService } from "./events.service";
-import { TenantResolutionService } from "../tenancy-branding/tenant-resolution.service";
 
 @ApiTags("events-admin")
 @UseGuards(TenantRbacGuard)
@@ -223,27 +221,22 @@ export class EventsAdminController {
 @ApiTags("events")
 @Controller("events")
 export class EventsPublicController {
-  constructor(
-    private readonly eventsService: EventsService,
-    private readonly tenantResolution: TenantResolutionService
-  ) {}
+  constructor(private readonly eventsService: EventsService) {}
 
   @Get()
-  async listPublicEvents(
+  listPublicEvents(
     @Query("limit", new DefaultValuePipe(20), ParseIntPipe)
     limit: number,
-    @Req() request: TenantAwareRequest
+    @ResolvedTenantId() tenantId?: string
   ) {
-    const tenantId = await this.tenantResolution.resolveTenantId(request);
     return this.eventsService.listPublicEvents(limit, tenantId);
   }
 
   @Get(":eventId")
-  async getPublicEvent(
+  getPublicEvent(
     @Param("eventId", ParseUUIDPipe) eventId: string,
-    @Req() request: TenantAwareRequest
+    @ResolvedTenantId() tenantId?: string
   ) {
-    const tenantId = await this.tenantResolution.resolveTenantId(request);
     return this.eventsService.getPublicEvent(eventId, tenantId);
   }
 }

@@ -1,10 +1,11 @@
-import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
+import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 import { AuditModule } from "./common/audit/audit.module";
 import { AuthModule } from "./common/auth/auth.module";
 import { EmailModule } from "./common/email/email.module";
 import { MagicLinkModule } from "./common/magic-link/magic-link.module";
 import { ProvisioningModule } from "./common/provisioning/provisioning.module";
-import { TenantResolverMiddleware } from "./common/tenancy/tenant-resolver.middleware";
+import { TenantResolverGuard } from "./common/tenancy/tenant-resolver.guard";
 import { PrismaModule } from "./infrastructure/prisma/prisma.module";
 import { CheckInModule } from "./modules/check-in/check-in.module";
 import { CommercialPoliciesModule } from "./modules/commercial-policies/commercial-policies.module";
@@ -28,10 +29,8 @@ import { TenancyBrandingModule } from "./modules/tenancy-branding/tenancy-brandi
     CheckInModule
   ],
   controllers: [HealthController],
-  providers: []
+  providers: [
+    { provide: APP_GUARD, useClass: TenantResolverGuard }
+  ]
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TenantResolverMiddleware).forRoutes("*");
-  }
-}
+export class AppModule {}

@@ -1,7 +1,7 @@
-import { FastifyReply } from "fastify";
+import { ExecutionContext } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TenancyBrandingService } from "../../modules/tenancy-branding/tenancy-branding.service";
-import { TenantAwareRequest, TenantResolverMiddleware } from "./tenant-resolver.middleware";
+import { TenantAwareRequest, TenantResolverGuard } from "./tenant-resolver.guard";
 
 function createMockTenancyBrandingService() {
   return {
@@ -26,6 +26,14 @@ function createMockRequest(
   } as unknown as TenantAwareRequest;
 }
 
+function createMockExecutionContext(request: TenantAwareRequest): ExecutionContext {
+  return {
+    switchToHttp: () => ({
+      getRequest: () => request
+    })
+  } as unknown as ExecutionContext;
+}
+
 const TENANT_FIXTURE = {
   id: "00000000-0000-0000-0000-000000000001",
   name: "Acme Eventos",
@@ -34,16 +42,27 @@ const TENANT_FIXTURE = {
   isActive: true
 };
 
-describe("TenantResolverMiddleware", () => {
-  let middleware: TenantResolverMiddleware;
+describe("TenantResolverGuard", () => {
+  let guard: TenantResolverGuard;
   let tenancyBranding: ReturnType<typeof createMockTenancyBrandingService>;
 
   beforeEach(() => {
     delete process.env.PLATFORM_BASE_DOMAINS;
     tenancyBranding = createMockTenancyBrandingService();
-    middleware = new TenantResolverMiddleware(
+    guard = new TenantResolverGuard(
       tenancyBranding as unknown as TenancyBrandingService
     );
+  });
+
+  // --- Sempre retorna true ---
+
+  it("deve sempre retornar true (nunca bloqueia)", async () => {
+    const request = createMockRequest("primeirafila.app");
+    const context = createMockExecutionContext(request);
+
+    const result = await guard.canActivate(context);
+
+    expect(result).toBe(true);
   });
 
   // --- Resolucao por subdominio ---
@@ -53,13 +72,12 @@ describe("TenantResolverMiddleware", () => {
       vi.mocked(tenancyBranding.resolveBySubdomain).mockResolvedValue(TENANT_FIXTURE as never);
 
       const request = createMockRequest("acme.primeirafila.app");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(tenancyBranding.resolveBySubdomain).toHaveBeenCalledWith("acme");
       expect(request.resolvedTenant).toEqual(TENANT_FIXTURE);
-      expect(next).toHaveBeenCalledOnce();
     });
 
     it("deve preferir X-Forwarded-Host sobre Host", async () => {
@@ -68,9 +86,9 @@ describe("TenantResolverMiddleware", () => {
       const request = createMockRequest("localhost:3000", {
         xForwardedHost: "acme.primeirafila.app"
       });
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(tenancyBranding.resolveBySubdomain).toHaveBeenCalledWith("acme");
       expect(request.resolvedTenant).toEqual(TENANT_FIXTURE);
@@ -80,9 +98,9 @@ describe("TenantResolverMiddleware", () => {
       vi.mocked(tenancyBranding.resolveBySubdomain).mockResolvedValue(TENANT_FIXTURE as never);
 
       const request = createMockRequest("acme.primeirafila.app:443");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(tenancyBranding.resolveBySubdomain).toHaveBeenCalledWith("acme");
     });
@@ -91,9 +109,9 @@ describe("TenantResolverMiddleware", () => {
       vi.mocked(tenancyBranding.resolveBySubdomain).mockResolvedValue(TENANT_FIXTURE as never);
 
       const request = createMockRequest("acme.primeirafila.app");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(tenancyBranding.resolveBySubdomain).toHaveBeenCalledWith("acme");
       expect(request.resolvedTenant).toEqual(TENANT_FIXTURE);
@@ -105,30 +123,29 @@ describe("TenantResolverMiddleware", () => {
   describe("dominio base", () => {
     it("nao deve resolver para dominio base puro", async () => {
       const request = createMockRequest("primeirafila.app");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(request.resolvedTenant).toBeUndefined();
       expect(tenancyBranding.resolveBySubdomain).not.toHaveBeenCalled();
       expect(tenancyBranding.resolveByDomain).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledOnce();
     });
 
     it("nao deve resolver para www do dominio base", async () => {
       const request = createMockRequest("www.primeirafila.app");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(request.resolvedTenant).toBeUndefined();
     });
 
     it("nao deve resolver para dominio base primeirafila.app puro", async () => {
       const request = createMockRequest("primeirafila.app");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(request.resolvedTenant).toBeUndefined();
       expect(tenancyBranding.resolveBySubdomain).not.toHaveBeenCalled();
@@ -148,9 +165,9 @@ describe("TenantResolverMiddleware", () => {
       vi.mocked(tenancyBranding.resolveByDomain).mockResolvedValue(tenantWithDomain as never);
 
       const request = createMockRequest("ingressos.acme.com.br");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(tenancyBranding.resolveByDomain).toHaveBeenCalledWith("ingressos.acme.com.br");
       expect(request.resolvedTenant).toEqual(tenantWithDomain);
@@ -160,12 +177,12 @@ describe("TenantResolverMiddleware", () => {
       vi.mocked(tenancyBranding.resolveByDomain).mockResolvedValue(null);
 
       const request = createMockRequest("dominio-desconhecido.com.br");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      const result = await guard.canActivate(context);
 
       expect(request.resolvedTenant).toBeUndefined();
-      expect(next).toHaveBeenCalledOnce();
+      expect(result).toBe(true);
     });
   });
 
@@ -174,12 +191,11 @@ describe("TenantResolverMiddleware", () => {
   describe("subdominios multi-nivel", () => {
     it("nao deve resolver subdominio com niveis extras", async () => {
       const request = createMockRequest("a.b.primeirafila.app");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(tenancyBranding.resolveBySubdomain).not.toHaveBeenCalled();
-      // Deve tentar como dominio customizado
       expect(tenancyBranding.resolveByDomain).not.toHaveBeenCalled();
     });
   });
@@ -187,14 +203,14 @@ describe("TenantResolverMiddleware", () => {
   // --- Sem host ---
 
   describe("request sem host", () => {
-    it("deve chamar next sem resolver quando nao ha host", async () => {
+    it("deve retornar true sem resolver quando nao ha host", async () => {
       const request = createMockRequest();
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      const result = await guard.canActivate(context);
 
       expect(request.resolvedTenant).toBeUndefined();
-      expect(next).toHaveBeenCalledOnce();
+      expect(result).toBe(true);
     });
   });
 
@@ -208,15 +224,14 @@ describe("TenantResolverMiddleware", () => {
       const request = createMockRequest("localhost", {
         xTenantId: "00000000-0000-0000-0000-000000000001"
       });
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(tenancyBranding.getTenantOrNull).toHaveBeenCalledWith(
         "00000000-0000-0000-0000-000000000001"
       );
       expect(request.resolvedTenant).toEqual(TENANT_FIXTURE);
-      expect(next).toHaveBeenCalledOnce();
     });
 
     it("nao deve definir tenant quando X-Tenant-Id nao existe no banco", async () => {
@@ -226,12 +241,11 @@ describe("TenantResolverMiddleware", () => {
       const request = createMockRequest("localhost", {
         xTenantId: "00000000-0000-0000-0000-000000000099"
       });
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(request.resolvedTenant).toBeUndefined();
-      expect(next).toHaveBeenCalledOnce();
     });
 
     it("deve resolver pelo X-Tenant-Id mesmo quando nao ha host", async () => {
@@ -240,33 +254,32 @@ describe("TenantResolverMiddleware", () => {
       const request = createMockRequest(undefined, {
         xTenantId: "00000000-0000-0000-0000-000000000001"
       });
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      await guard.canActivate(context);
 
       expect(tenancyBranding.getTenantOrNull).toHaveBeenCalledWith(
         "00000000-0000-0000-0000-000000000001"
       );
       expect(request.resolvedTenant).toEqual(TENANT_FIXTURE);
-      expect(next).toHaveBeenCalledOnce();
     });
   });
 
   // --- Tratamento de erros ---
 
   describe("tratamento de erros", () => {
-    it("deve chamar next mesmo se resolver lanca erro", async () => {
+    it("deve retornar true mesmo se resolver lanca erro", async () => {
       vi.mocked(tenancyBranding.resolveBySubdomain).mockRejectedValue(
         new Error("DB connection lost")
       );
 
       const request = createMockRequest("acme.primeirafila.app");
-      const next = vi.fn();
+      const context = createMockExecutionContext(request);
 
-      await middleware.use(request, {} as FastifyReply, next);
+      const result = await guard.canActivate(context);
 
       expect(request.resolvedTenant).toBeUndefined();
-      expect(next).toHaveBeenCalledOnce();
+      expect(result).toBe(true);
     });
   });
 });
