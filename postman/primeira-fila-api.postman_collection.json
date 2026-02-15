@@ -5,16 +5,46 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3001" },
-    { "key": "jwtToken", "value": "" },
-    { "key": "tenantId", "value": "" },
-    { "key": "eventId", "value": "" },
-    { "key": "eventDayId", "value": "" },
-    { "key": "sessionId", "value": "" },
-    { "key": "seatId", "value": "" },
-    { "key": "holdId", "value": "" },
-    { "key": "orderId", "value": "" },
-    { "key": "hostForTenant", "value": "acme.primeira-fila.com" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "jwtToken",
+      "value": ""
+    },
+    {
+      "key": "tenantId",
+      "value": ""
+    },
+    {
+      "key": "eventId",
+      "value": ""
+    },
+    {
+      "key": "eventDayId",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "seatId",
+      "value": ""
+    },
+    {
+      "key": "holdId",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "hostForTenant",
+      "value": "acme.primeirafila.app"
+    }
   ],
   "item": [
     {
@@ -39,8 +69,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -55,7 +91,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}",
             "description": "Obtém tenant por ID. Requer organizer_admin ou platform_admin."
@@ -66,8 +105,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -82,8 +127,14 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -98,7 +149,10 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/custom-domain",
             "description": "Remove domínio customizado. Retorna 204. Requer organizer_admin ou platform_admin."
@@ -109,7 +163,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/custom-domain/verify",
             "description": "Verifica domínio customizado. Requer organizer_admin ou platform_admin."
@@ -120,7 +177,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/custom-domain/status",
             "description": "Obtém status do domínio customizado. Requer organizer_admin ou platform_admin."
@@ -133,10 +193,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/v1/public/tenants/resolve?subdomain=minhacasa",
-              "host": ["{{baseUrl}}"],
-              "path": ["v1", "public", "tenants", "resolve"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "public",
+                "tenants",
+                "resolve"
+              ],
               "query": [
-                { "key": "subdomain", "value": "minhacasa" }
+                {
+                  "key": "subdomain",
+                  "value": "minhacasa"
+                }
               ]
             },
             "description": "Resolve tenant por subdomínio. Rota pública."
@@ -149,10 +219,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/v1/public/tenants/resolve?domain=ingressos.meuevento.com.br",
-              "host": ["{{baseUrl}}"],
-              "path": ["v1", "public", "tenants", "resolve"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "public",
+                "tenants",
+                "resolve"
+              ],
               "query": [
-                { "key": "domain", "value": "ingressos.meuevento.com.br" }
+                {
+                  "key": "domain",
+                  "value": "ingressos.meuevento.com.br"
+                }
               ]
             },
             "description": "Resolve tenant por domínio customizado. Rota pública."
@@ -168,8 +248,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -184,7 +270,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events",
             "description": "Lista eventos do tenant."
@@ -195,7 +284,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}",
             "description": "Obtém evento por ID."
@@ -206,8 +298,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -222,7 +320,10 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}",
             "description": "Remove evento. Retorna 204."
@@ -233,8 +334,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -249,7 +356,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days",
             "description": "Lista dias do evento."
@@ -260,7 +370,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}",
             "description": "Obtém dia do evento."
@@ -271,8 +384,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -287,7 +406,10 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}",
             "description": "Remove dia do evento. Retorna 204."
@@ -298,8 +420,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -314,7 +442,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions",
             "description": "Lista sessões do dia."
@@ -325,7 +456,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}",
             "description": "Obtém sessão por ID."
@@ -336,8 +470,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -352,7 +492,10 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}",
             "description": "Remove sessão. Retorna 204."
@@ -363,8 +506,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -379,7 +528,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}/seats",
             "description": "Lista assentos da sessão."
@@ -390,8 +542,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -406,7 +564,10 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}/seats/{{seatId}}",
             "description": "Remove assento. Retorna 204."
@@ -422,14 +583,25 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Host", "value": "{{hostForTenant}}" }
+              {
+                "key": "Host",
+                "value": "{{hostForTenant}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/v1/events?limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["v1", "events"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "events"
+              ],
               "query": [
-                { "key": "limit", "value": "20" }
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
               ]
             },
             "description": "Lista eventos públicos. Tenant resolvido pelo Host (subdomínio ou domínio customizado)."
@@ -440,7 +612,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Host", "value": "{{hostForTenant}}" }
+              {
+                "key": "Host",
+                "value": "{{hostForTenant}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/events/{{eventId}}",
             "description": "Obtém evento público. Tenant resolvido pelo Host."
@@ -456,7 +631,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -485,8 +663,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "order-{{$randomUUID}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "order-{{$randomUUID}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -501,8 +685,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Idempotency-Key", "value": "payment-{{$randomUUID}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "payment-{{$randomUUID}}"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -519,11 +709,23 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/v1/orders/{{orderId}}?token=TOKEN&email=joao@email.com",
-              "host": ["{{baseUrl}}"],
-              "path": ["v1", "orders", "{{orderId}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "orders",
+                "{{orderId}}"
+              ],
               "query": [
-                { "key": "token", "value": "TOKEN" },
-                { "key": "email", "value": "joao@email.com" }
+                {
+                  "key": "token",
+                  "value": "TOKEN"
+                },
+                {
+                  "key": "email",
+                  "value": "joao@email.com"
+                }
               ]
             },
             "description": "Obtém pedido por token e email (enviado por magic link)."
@@ -536,11 +738,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/v1/orders/{{orderId}}/tickets?token=TOKEN&email=joao@email.com",
-              "host": ["{{baseUrl}}"],
-              "path": ["v1", "orders", "{{orderId}}", "tickets"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "orders",
+                "{{orderId}}",
+                "tickets"
+              ],
               "query": [
-                { "key": "token", "value": "TOKEN" },
-                { "key": "email", "value": "joao@email.com" }
+                {
+                  "key": "token",
+                  "value": "TOKEN"
+                },
+                {
+                  "key": "email",
+                  "value": "joao@email.com"
+                }
               ]
             },
             "description": "Obtém ingressos do pedido por token e email."
@@ -551,7 +766,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -571,8 +789,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -592,7 +816,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -612,7 +839,10 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
             ],
             "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/commercial-policy",
             "description": "Obtém política comercial do tenant."
@@ -623,8 +853,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -644,8 +880,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",

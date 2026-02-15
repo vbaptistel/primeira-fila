@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CustomDomainService } from "./custom-domain.service";
 import { TenancyBrandingService } from "./tenancy-branding.service";
+import { VercelApiClient } from "./vercel-api.client";
 
 function createMockPrisma() {
   return {
@@ -62,18 +63,20 @@ describe("CustomDomainService", () => {
   let service: CustomDomainService;
   let prisma: ReturnType<typeof createMockPrisma>;
   let tenancyBranding: ReturnType<typeof createMockTenancyBrandingService>;
+  let vercel: VercelApiClient;
 
   beforeEach(() => {
-    // Garantir que variaveis Vercel nao estao setadas nos testes
     delete process.env.VERCEL_TOKEN;
     delete process.env.VERCEL_TEAM_ID;
     delete process.env.VERCEL_WEB_CUSTOMER_PROJECT_ID;
 
     prisma = createMockPrisma();
     tenancyBranding = createMockTenancyBrandingService();
+    vercel = new VercelApiClient();
     service = new CustomDomainService(
       prisma as unknown as PrismaService,
-      tenancyBranding as unknown as TenancyBrandingService
+      tenancyBranding as unknown as TenancyBrandingService,
+      vercel
     );
   });
 
@@ -88,7 +91,8 @@ describe("CustomDomainService", () => {
       setupVercelWithMockedFetch();
       const svc = new CustomDomainService(
         prisma as unknown as PrismaService,
-        tenancyBranding as unknown as TenancyBrandingService
+        tenancyBranding as unknown as TenancyBrandingService,
+        new VercelApiClient()
       );
       vi.mocked(tenancyBranding.getTenant).mockResolvedValue(TENANT_FIXTURE as never);
       vi.mocked(prisma.tenant.update).mockResolvedValue({} as never);
@@ -136,7 +140,8 @@ describe("CustomDomainService", () => {
       setupVercelWithMockedFetch();
       const svc = new CustomDomainService(
         prisma as unknown as PrismaService,
-        tenancyBranding as unknown as TenancyBrandingService
+        tenancyBranding as unknown as TenancyBrandingService,
+        new VercelApiClient()
       );
       const tenantWithDomain = {
         ...TENANT_FIXTURE,
@@ -246,7 +251,8 @@ describe("CustomDomainService", () => {
       setupVercelWithMockedFetch();
       const svc = new CustomDomainService(
         prisma as unknown as PrismaService,
-        tenancyBranding as unknown as TenancyBrandingService
+        tenancyBranding as unknown as TenancyBrandingService,
+        new VercelApiClient()
       );
       const pendingTenant = {
         ...TENANT_FIXTURE,
@@ -293,7 +299,8 @@ describe("CustomDomainService", () => {
       setupVercelWithMockedFetch();
       const svc = new CustomDomainService(
         prisma as unknown as PrismaService,
-        tenancyBranding as unknown as TenancyBrandingService
+        tenancyBranding as unknown as TenancyBrandingService,
+        new VercelApiClient()
       );
 
       const instructions = await svc.getDnsInstructions("ingressos.acme.com.br");

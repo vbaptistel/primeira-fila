@@ -1,8 +1,8 @@
 /**
  * Domínios base da plataforma para resolução de tenant por subdomínio.
- * Subdomínios válidos: acme.primeira-fila.com, acme.primeirafila.app
+ * Subdomínios válidos: acme.primeirafila.app, acme.primeirafila.app
  */
-const DEFAULT_BASE_DOMAINS = ["primeira-fila.com", "primeirafila.app"];
+const DEFAULT_BASE_DOMAINS = ["primeirafila.app", "primeirafila.app"];
 
 export function getPlatformBaseDomains(): string[] {
   const env = process.env.PLATFORM_BASE_DOMAINS;
@@ -16,8 +16,8 @@ export function getPlatformBaseDomains(): string[] {
 }
 
 export type HostParseResult =
-  | { type: "subdomain"; subdomain: string }
-  | { type: "custom"; domain: string }
+  | { type: "subdomain"; subdomain: string; }
+  | { type: "custom"; domain: string; }
   | null;
 
 /**

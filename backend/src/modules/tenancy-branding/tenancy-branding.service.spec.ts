@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import { TenancyBrandingService } from "./tenancy-branding.service";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
+import { SubdomainProvisioningService } from "./subdomain-provisioning.service";
 
 function createMockPrisma() {
   return {
@@ -11,6 +12,12 @@ function createMockPrisma() {
       update: vi.fn()
     }
   } as unknown as PrismaService;
+}
+
+function createMockSubdomainProvisioning() {
+  return {
+    provisionSubdomain: vi.fn().mockResolvedValue(undefined)
+  } as unknown as SubdomainProvisioningService;
 }
 
 const TENANT_FIXTURE = {
@@ -39,10 +46,15 @@ const TENANT_FIXTURE = {
 describe("TenancyBrandingService", () => {
   let service: TenancyBrandingService;
   let prisma: ReturnType<typeof createMockPrisma>;
+  let subdomainProvisioning: ReturnType<typeof createMockSubdomainProvisioning>;
 
   beforeEach(() => {
     prisma = createMockPrisma();
-    service = new TenancyBrandingService(prisma as unknown as PrismaService);
+    subdomainProvisioning = createMockSubdomainProvisioning();
+    service = new TenancyBrandingService(
+      prisma as unknown as PrismaService,
+      subdomainProvisioning as unknown as SubdomainProvisioningService
+    );
   });
 
   // --- createTenant ---
@@ -52,7 +64,25 @@ describe("TenancyBrandingService", () => {
       vi.mocked(prisma.tenant.create).mockResolvedValue(TENANT_FIXTURE as never);
 
       const result = await service.createTenant({
-        id: TENANT_FIXTURE.id,
+        name: TENANT_FIXTURE.name,
+        slug: TENANT_FIXTURE.slug,
+        subdomain: TENANT_FIXTURE.subdomain
+      });
+
+      expect(result).toEqual(TENANT_FIXTURE);
+      expect(prisma.tenant.create).toHaveBeenCalledOnce();
+      const createData = vi.mocked(prisma.tenant.create).mock.calls[0][0].data as Record<string, unknown>;
+      expect(createData).not.toHaveProperty("id");
+      expect(subdomainProvisioning.provisionSubdomain).toHaveBeenCalledWith(TENANT_FIXTURE);
+    });
+
+    it("deve retornar tenant criado mesmo quando provisionSubdomain falha", async () => {
+      vi.mocked(prisma.tenant.create).mockResolvedValue(TENANT_FIXTURE as never);
+      vi.mocked(subdomainProvisioning.provisionSubdomain).mockRejectedValue(
+        new Error("Vercel API error")
+      );
+
+      const result = await service.createTenant({
         name: TENANT_FIXTURE.name,
         slug: TENANT_FIXTURE.slug,
         subdomain: TENANT_FIXTURE.subdomain
@@ -67,7 +97,6 @@ describe("TenancyBrandingService", () => {
 
       await expect(
         service.createTenant({
-          id: TENANT_FIXTURE.id,
           name: TENANT_FIXTURE.name,
           slug: TENANT_FIXTURE.slug,
           subdomain: TENANT_FIXTURE.subdomain
@@ -80,7 +109,6 @@ describe("TenancyBrandingService", () => {
 
       await expect(
         service.createTenant({
-          id: TENANT_FIXTURE.id,
           name: TENANT_FIXTURE.name,
           slug: TENANT_FIXTURE.slug,
           subdomain: TENANT_FIXTURE.subdomain

@@ -4,7 +4,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  IsUUID,
   Matches,
   MaxLength
 } from "class-validator";
@@ -25,9 +24,6 @@ function normalizeSubdomain(value: unknown): unknown {
 }
 
 export class CreateTenantDto {
-  @IsUUID()
-  id!: string;
-
   @IsString()
   @MaxLength(160)
   name!: string;

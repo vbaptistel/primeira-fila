@@ -8,6 +8,7 @@ import { Tenant } from "../../generated/prisma/client";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CreateTenantDto } from "./dto/create-tenant.dto";
 import { UpdateTenantDto } from "./dto/update-tenant.dto";
+import { SubdomainProvisioningService } from "./subdomain-provisioning.service";
 
 type CacheEntry = {
   tenant: Tenant;
@@ -22,13 +23,16 @@ export class TenancyBrandingService {
   private readonly subdomainCache = new Map<string, CacheEntry>();
   private readonly domainCache = new Map<string, CacheEntry>();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly subdomainProvisioning: SubdomainProvisioningService
+  ) {}
 
   async createTenant(dto: CreateTenantDto): Promise<Tenant> {
+    let tenant: Tenant;
     try {
-      return await this.prisma.tenant.create({
+      tenant = await this.prisma.tenant.create({
         data: {
-          id: dto.id,
           name: dto.name,
           slug: dto.slug,
           subdomain: dto.subdomain,
@@ -48,11 +52,21 @@ export class TenancyBrandingService {
     } catch (error) {
       if (this.isPrismaErrorCode(error, "P2002")) {
         throw new ConflictException(
-          "Tenant com este id, slug ou subdomain ja existe."
+          "Tenant com este slug ou subdomain ja existe."
         );
       }
       throw error;
     }
+
+    try {
+      await this.subdomainProvisioning.provisionSubdomain(tenant);
+    } catch (error) {
+      this.logger.warn(
+        `Falha ao provisionar subdominio na Vercel para tenant ${tenant.id} (tenant criado): ${String(error)}`
+      );
+    }
+
+    return tenant;
   }
 
   async getTenant(tenantId: string): Promise<Tenant> {

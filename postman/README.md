@@ -39,7 +39,7 @@ As rotas autenticadas exigem um token JWT do Supabase Auth.
 | `seatId` | UUID do assento | (preencha após criar assentos) |
 | `holdId` | UUID do hold | (retornado por Create Hold) |
 | `orderId` | UUID do pedido | (retornado por Create Order) |
-| `hostForTenant` | Host para resolver tenant em rotas públicas | `acme.primeira-fila.com` |
+| `hostForTenant` | Host para resolver tenant em rotas públicas | `acme.primeirafila.app` |
 
 ## Ordem sugerida de uso
 
@@ -54,9 +54,9 @@ As rotas autenticadas exigem um token JWT do Supabase Auth.
 
 ## Rotas públicas e Host
 
-Rotas como **List Public Events** e **Get Public Event** resolvem o tenant pelo header `Host` (ou `X-Forwarded-Host`). Em testes locais, use `hostForTenant` com um subdomínio existente (ex: `acme.primeira-fila.com`). Para isso funcionar localmente, você pode:
+Rotas como **List Public Events** e **Get Public Event** resolvem o tenant pelo header `Host` (ou `X-Forwarded-Host`). Em testes locais, use `hostForTenant` com um subdomínio existente (ex: `acme.primeirafila.app`). Para isso funcionar localmente, você pode:
 
-- Mapear no `/etc/hosts`: `127.0.0.1 acme.primeira-fila.com`
+- Mapear no `/etc/hosts`: `127.0.0.1 acme.primeirafila.app`
 - Ou usar a URL de staging/produção no `baseUrl` e `hostForTenant`.
 
 ## Importar via OpenAPI

@@ -28,6 +28,24 @@ Backend único em NestJS, com processamento totalmente síncrono nesta fase, pub
 - Timeout e limites de payload compatíveis com fluxos síncronos do MVP.
 - Variáveis sensíveis gerenciadas apenas no painel/CLI da Vercel.
 
+### Provisionamento de subdomínios (web-customer)
+
+Ao criar um tenant via `POST /v1/tenants`, o backend tenta configurar o subdomínio da plataforma no projeto Vercel do web-customer e, se o domínio base estiver no **Vercel DNS**, criar o registro CNAME automaticamente.
+
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `PLATFORM_SUBDOMAIN_BASE_DOMAIN` | Não | Domínio base para subdomínios (ex.: `primeirafila.app`). Se ausente, usa o primeiro de `PLATFORM_BASE_DOMAINS`. |
+| `PLATFORM_BASE_DOMAINS` | Não | Lista separada por vírgula de domínios base (ex.: `primeirafila.app,primeirafila.app`). Usado na resolução de tenant e como fallback para o domínio de subdomínios. |
+| `VERCEL_TOKEN` | Não* | Token da API Vercel. Necessário para adicionar subdomínio ao projeto e criar registro DNS. |
+| `VERCEL_TEAM_ID` | Não | ID do time Vercel (quando aplicável). |
+| `VERCEL_WEB_CUSTOMER_PROJECT_ID` | Não* | ID do projeto Vercel do web-customer. |
+
+\* Sem `VERCEL_TOKEN` e `VERCEL_WEB_CUSTOMER_PROJECT_ID`, o tenant é criado normalmente e o provisionamento de subdomínio é omitido.
+
+**Pré-requisito para DNS automático:** o domínio base (ex.: `primeirafila.app`) deve estar no time Vercel e usar **Vercel DNS** (nameservers da Vercel). Caso contrário, apenas a adição do domínio ao projeto é tentada; o registro CNAME deve ser configurado manualmente no provedor de DNS.
+
+Falhas no provisionamento (Vercel indisponível, domínio não no Vercel DNS, etc.) **não bloqueiam** a criação do tenant; são apenas logadas. Os logs do backend permitem conferir sucesso ou falha do provisionamento.
+
 ## Configuração de Autenticação (Supabase Auth)
 - Backend valida tokens JWT do Supabase Auth em todas as rotas protegidas.
 - Claims mínimas para autorização: `sub`, `role` e `tenant_id`.
@@ -146,6 +164,7 @@ Evidência operacional registrada (2026-02-14):
 - Deploy em horário de pico aumenta risco operacional em caso de regressão.
 
 ## Changelog
+- `v2.5.0` - 2026-02-15 - Seção "Provisionamento de subdomínios (web-customer)": variáveis `PLATFORM_SUBDOMAIN_BASE_DOMAIN`, `PLATFORM_BASE_DOMAINS` e uso de Vercel DNS para criação automática de CNAME ao criar tenant; falhas de provisionamento não bloqueiam a criação do tenant.
 - `v2.4.0` - 2026-02-14 - Baseline reforçado com padrão automático de segurança para novas tabelas no Supabase (`RLS` + `FORCE RLS` + revoke para `anon`/`authenticated`).
 - `v2.3.0` - 2026-02-14 - Inclusão de baseline de segurança Supabase e automação de smoke test pós-deploy.
 - `v2.2.0` - 2026-02-14 - Inclusão do Supabase Auth como provider oficial de autenticação.

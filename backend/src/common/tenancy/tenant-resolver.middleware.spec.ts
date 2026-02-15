@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { TenantResolverMiddleware, TenantAwareRequest } from "./tenant-resolver.middleware";
-import { TenancyBrandingService } from "../../modules/tenancy-branding/tenancy-branding.service";
 import { FastifyReply } from "fastify";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { TenancyBrandingService } from "../../modules/tenancy-branding/tenancy-branding.service";
+import { TenantAwareRequest, TenantResolverMiddleware } from "./tenant-resolver.middleware";
 
 function createMockTenancyBrandingService() {
   return {
@@ -47,7 +47,7 @@ describe("TenantResolverMiddleware", () => {
     it("deve resolver tenant por subdominio do Host header", async () => {
       vi.mocked(tenancyBranding.resolveBySubdomain).mockResolvedValue(TENANT_FIXTURE as never);
 
-      const request = createMockRequest("acme.primeira-fila.com");
+      const request = createMockRequest("acme.primeirafila.app");
       const next = vi.fn();
 
       await middleware.use(request, {} as FastifyReply, next);
@@ -60,7 +60,7 @@ describe("TenantResolverMiddleware", () => {
     it("deve preferir X-Forwarded-Host sobre Host", async () => {
       vi.mocked(tenancyBranding.resolveBySubdomain).mockResolvedValue(TENANT_FIXTURE as never);
 
-      const request = createMockRequest("localhost:3000", "acme.primeira-fila.com");
+      const request = createMockRequest("localhost:3000", "acme.primeirafila.app");
       const next = vi.fn();
 
       await middleware.use(request, {} as FastifyReply, next);
@@ -72,7 +72,7 @@ describe("TenantResolverMiddleware", () => {
     it("deve remover porta do host", async () => {
       vi.mocked(tenancyBranding.resolveBySubdomain).mockResolvedValue(TENANT_FIXTURE as never);
 
-      const request = createMockRequest("acme.primeira-fila.com:443");
+      const request = createMockRequest("acme.primeirafila.app:443");
       const next = vi.fn();
 
       await middleware.use(request, {} as FastifyReply, next);
@@ -97,7 +97,7 @@ describe("TenantResolverMiddleware", () => {
 
   describe("dominio base", () => {
     it("nao deve resolver para dominio base puro", async () => {
-      const request = createMockRequest("primeira-fila.com");
+      const request = createMockRequest("primeirafila.app");
       const next = vi.fn();
 
       await middleware.use(request, {} as FastifyReply, next);
@@ -109,7 +109,7 @@ describe("TenantResolverMiddleware", () => {
     });
 
     it("nao deve resolver para www do dominio base", async () => {
-      const request = createMockRequest("www.primeira-fila.com");
+      const request = createMockRequest("www.primeirafila.app");
       const next = vi.fn();
 
       await middleware.use(request, {} as FastifyReply, next);
@@ -166,7 +166,7 @@ describe("TenantResolverMiddleware", () => {
 
   describe("subdominios multi-nivel", () => {
     it("nao deve resolver subdominio com niveis extras", async () => {
-      const request = createMockRequest("a.b.primeira-fila.com");
+      const request = createMockRequest("a.b.primeirafila.app");
       const next = vi.fn();
 
       await middleware.use(request, {} as FastifyReply, next);
@@ -199,7 +199,7 @@ describe("TenantResolverMiddleware", () => {
         new Error("DB connection lost")
       );
 
-      const request = createMockRequest("acme.primeira-fila.com");
+      const request = createMockRequest("acme.primeirafila.app");
       const next = vi.fn();
 
       await middleware.use(request, {} as FastifyReply, next);

@@ -12,7 +12,7 @@ export type TenantAwareRequest = FastifyRequest & {
  * Middleware que resolve o tenant a partir do header Host.
  *
  * Logica de resolucao (via tenant-resolver.utils):
- * 1. Se o host e um subdominio de um dominio base (e.g. acme.primeira-fila.com, acme.primeirafila.app),
+ * 1. Se o host e um subdominio de um dominio base (e.g. acme.primeirafila.app, acme.primeirafila.app),
  *    extrai o subdomain e busca por subdomain.
  * 2. Se o host nao pertence a nenhum dominio base, trata como dominio customizado
  *    e busca por customDomain (somente VERIFIED).
@@ -26,7 +26,7 @@ export type TenantAwareRequest = FastifyRequest & {
 export class TenantResolverMiddleware implements NestMiddleware {
   private readonly logger = new Logger(TenantResolverMiddleware.name);
 
-  constructor(private readonly tenancyBrandingService: TenancyBrandingService) {}
+  constructor(private readonly tenancyBrandingService: TenancyBrandingService) { }
 
   async use(
     request: TenantAwareRequest,
