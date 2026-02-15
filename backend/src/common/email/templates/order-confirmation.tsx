@@ -6,6 +6,7 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Preview,
   Row,
   Section,
@@ -109,12 +110,24 @@ export function OrderConfirmationEmail(props: OrderConfirmationProps) {
             </Heading>
             {tickets.map((ticket) => (
               <Section key={ticket.qrCode} style={ticketCardStyle}>
-                <Text style={ticketSessionStyle}>{ticket.sessionName}</Text>
-                <Text style={detailStyle}>
-                  Setor {ticket.seatSector} | Fileira {ticket.seatRow} | Assento{" "}
-                  {ticket.seatNumber}
-                </Text>
-                <Text style={qrCodeStyle}>QR: {ticket.qrCode}</Text>
+                <Row>
+                  <Column style={ticketInfoColumnStyle}>
+                    <Text style={ticketSessionStyle}>{ticket.sessionName}</Text>
+                    <Text style={detailStyle}>
+                      Setor {ticket.seatSector} | Fileira {ticket.seatRow} | Assento{" "}
+                      {ticket.seatNumber}
+                    </Text>
+                  </Column>
+                  <Column style={qrColumnStyle}>
+                    <Img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(ticket.qrCode)}`}
+                      width={90}
+                      height={90}
+                      alt={`QR Code do ingresso - ${ticket.seatSector} ${ticket.seatRow}${ticket.seatNumber}`}
+                      style={qrImageStyle}
+                    />
+                  </Column>
+                </Row>
               </Section>
             ))}
           </Section>
@@ -199,11 +212,19 @@ const ticketSessionStyle: React.CSSProperties = {
   margin: "0 0 4px"
 };
 
-const qrCodeStyle: React.CSSProperties = {
-  color: "#6b7280",
-  fontSize: "12px",
-  fontFamily: "monospace",
-  margin: "8px 0 0"
+const ticketInfoColumnStyle: React.CSSProperties = {
+  verticalAlign: "middle"
+};
+
+const qrColumnStyle: React.CSSProperties = {
+  width: "100px",
+  verticalAlign: "middle",
+  textAlign: "center" as const
+};
+
+const qrImageStyle: React.CSSProperties = {
+  borderRadius: "4px",
+  border: "1px solid #e5e7eb"
 };
 
 const hrStyle: React.CSSProperties = {
