@@ -472,6 +472,69 @@ export class OrdersService {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    // Token "confirmation" permite acesso imediato apos checkout, desde que o pedido esteja pago
+    // e o email corresponda ao comprador (fluxo: usuario acabou de pagar e foi redirecionado)
+    const isConfirmationToken = token === "confirmation";
+    if (isConfirmationToken) {
+      const order = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          session: true,
+          items: { orderBy: { createdAt: "asc" } },
+          tickets: {
+            include: {
+              seat: true,
+              session: true
+            },
+            orderBy: { createdAt: "asc" }
+          }
+        }
+      });
+      if (order && order.buyerEmail === normalizedEmail && order.status === "PAID") {
+        return {
+          id: order.id,
+          status: order.status,
+          buyerName: order.buyerName,
+          buyerEmail: order.buyerEmail,
+          ticketSubtotalCents: order.ticketSubtotalCents,
+          serviceFeeCents: order.serviceFeeCents,
+          totalAmountCents: order.totalAmountCents,
+          currencyCode: order.currencyCode,
+          createdAt: order.createdAt,
+          session: {
+            id: order.session.id,
+            name: order.session.name,
+            startsAt: order.session.startsAt,
+            endsAt: order.session.endsAt
+          },
+          items: order.items.map((item) => ({
+            id: item.id,
+            unitPriceCents: item.unitPriceCents,
+            currencyCode: item.currencyCode
+          })),
+          tickets: order.tickets.map((ticket) => ({
+            id: ticket.id,
+            qrCode: ticket.qrCode,
+            status: ticket.status,
+            seat: {
+              id: ticket.seat.id,
+              sectorCode: ticket.seat.sectorCode,
+              rowLabel: ticket.seat.rowLabel,
+              seatNumber: ticket.seat.seatNumber
+            },
+            session: {
+              id: ticket.session.id,
+              name: ticket.session.name,
+              startsAt: ticket.session.startsAt,
+              endsAt: ticket.session.endsAt
+            }
+          }))
+        };
+      }
+      throw new ForbiddenException("Token invalido ou expirado.");
+    }
+
     const isValid = this.magicLinkTokenService.validateToken(orderId, normalizedEmail, token);
 
     if (!isValid) {

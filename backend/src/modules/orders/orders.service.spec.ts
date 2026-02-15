@@ -726,6 +726,64 @@ describe("OrdersService", () => {
         service.getOrderByToken("order-001", "valid-token", "outro@email.com")
       ).rejects.toThrow(NotFoundException);
     });
+
+    it("deve retornar pedido quando token=confirmation, pedido PAID e email corresponde", async () => {
+      const order = {
+        ...buildMockOrder({ status: OrderStatus.PAID }),
+        session: { id: "session-001", name: "Sessao Tarde", startsAt: new Date(), endsAt: new Date() },
+        items: [{ id: "item-001", sessionId: "session-001", seatId: "seat-001", unitPriceCents: 5000, currencyCode: "BRL" }],
+        tickets: [{
+          id: "ticket-001",
+          qrCode: "qr-001",
+          status: TicketStatus.VALID,
+          seat: { id: "seat-001", sectorCode: "A", rowLabel: "1", seatNumber: 10 },
+          session: { id: "session-001", name: "Sessao Tarde", startsAt: new Date(), endsAt: new Date() }
+        }],
+        createdAt: new Date()
+      };
+
+      (prisma.order as unknown as { findUnique: ReturnType<typeof vi.fn> }).findUnique
+        .mockResolvedValue(order);
+
+      const result = await service.getOrderByToken("order-001", "confirmation", "maria@email.com");
+
+      expect(result).toHaveProperty("id", "order-001");
+      expect(result).toHaveProperty("buyerName", "Maria Silva");
+      expect(result).toHaveProperty("status", OrderStatus.PAID);
+      expect(magicLinkTokenService.validateToken).not.toHaveBeenCalled();
+    });
+
+    it("deve lancar ForbiddenException quando token=confirmation mas pedido nao esta PAID", async () => {
+      const order = {
+        ...buildMockOrder({ status: OrderStatus.PENDING_PAYMENT }),
+        session: { id: "session-001", name: "Sessao Tarde", startsAt: new Date(), endsAt: new Date() },
+        tickets: [],
+        createdAt: new Date()
+      };
+
+      (prisma.order as unknown as { findUnique: ReturnType<typeof vi.fn> }).findUnique
+        .mockResolvedValue(order);
+
+      await expect(
+        service.getOrderByToken("order-001", "confirmation", "maria@email.com")
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it("deve lancar ForbiddenException quando token=confirmation mas email nao corresponde", async () => {
+      const order = {
+        ...buildMockOrder({ status: OrderStatus.PAID }),
+        session: { id: "session-001", name: "Sessao Tarde", startsAt: new Date(), endsAt: new Date() },
+        tickets: [],
+        createdAt: new Date()
+      };
+
+      (prisma.order as unknown as { findUnique: ReturnType<typeof vi.fn> }).findUnique
+        .mockResolvedValue(order);
+
+      await expect(
+        service.getOrderByToken("order-001", "confirmation", "outro@email.com")
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 
   // ─── requestOrderAccess ────────────────────────────────────────
