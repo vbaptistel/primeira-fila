@@ -12,6 +12,7 @@ import {
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SUBDOMAIN_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{3,8}$/;
+const COLOR_SCHEME_PATTERN = /^(light|dark|system)$/;
 
 function normalizeSlug(value: unknown): unknown {
   if (typeof value !== "string") return value;
@@ -72,6 +73,14 @@ export class CreateTenantDto {
   @MaxLength(9)
   @Matches(HEX_COLOR_PATTERN, { message: "accentColor deve ser uma cor hexadecimal valida." })
   accentColor?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  @Matches(COLOR_SCHEME_PATTERN, {
+    message: 'colorScheme deve ser "light", "dark" ou "system".'
+  })
+  colorScheme?: string;
 
   @IsOptional()
   @IsString()

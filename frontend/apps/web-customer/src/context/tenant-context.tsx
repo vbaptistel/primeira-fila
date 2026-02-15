@@ -18,6 +18,13 @@ type TenantProviderProps = {
 export function TenantProvider({ tenant, children }: TenantProviderProps) {
   useEffect(() => {
     applyTenantBranding(tenant);
+
+    if (tenant.colorScheme !== "system") return;
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => applyTenantBranding(tenant);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
   }, [tenant]);
 
   return (

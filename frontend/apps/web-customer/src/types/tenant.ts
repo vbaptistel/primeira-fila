@@ -1,3 +1,5 @@
+export type ColorScheme = "light" | "dark" | "system";
+
 export type TenantBranding = {
   id: string;
   name: string;
@@ -8,6 +10,7 @@ export type TenantBranding = {
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
+  colorScheme: ColorScheme;
   footerText: string | null;
   termsUrl: string | null;
   privacyUrl: string | null;

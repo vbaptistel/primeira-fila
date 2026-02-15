@@ -12,6 +12,7 @@ const DEFAULT_TENANT: TenantBranding = {
   primaryColor: "#0f766e",
   secondaryColor: "#f4f8f7",
   accentColor: "#3B82F6",
+  colorScheme: "light",
   footerText: null,
   termsUrl: null,
   privacyUrl: null,

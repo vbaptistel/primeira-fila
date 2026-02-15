@@ -102,6 +102,7 @@ model Tenant {
   primaryColor           String              @default("#000000") @map("primary_color") @db.VarChar(9)
   secondaryColor         String              @default("#FFFFFF") @map("secondary_color") @db.VarChar(9)
   accentColor            String              @default("#3B82F6") @map("accent_color") @db.VarChar(9)
+  colorScheme            String              @default("light") @map("color_scheme") @db.VarChar(10)
   footerText             String?             @map("footer_text") @db.VarChar(500)
   termsUrl               String?             @map("terms_url") @db.VarChar(500)
   privacyUrl             String?             @map("privacy_url") @db.VarChar(500)
