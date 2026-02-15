@@ -14,20 +14,49 @@ import type {
 
 // ─── Tenant ────────────────────────────────────────────────────
 
-export function resolveTenant(host: string): Promise<TenantBranding> {
-  return api.get<TenantBranding>("/v1/public/tenants/resolve", {
-    headers: { Host: host }
-  });
+export type ResolveTenantResponse = {
+  found: boolean;
+  tenant: TenantBranding | null;
+};
+
+/** Resolve tenant por host (subdominio ou dominio customizado). Usado em SSR quando o cookie ainda nao foi setado. */
+export function resolveTenantByHost(host: string): Promise<ResolveTenantResponse> {
+  return api.get<ResolveTenantResponse>(
+    `/v1/public/tenants/resolve?domain=${encodeURIComponent(host)}`
+  );
 }
 
 // ─── Events ────────────────────────────────────────────────────
 
-export function listPublicEvents(limit = 20): Promise<PublicEvent[]> {
-  return api.get<PublicEvent[]>(`/v1/events?limit=${limit}`);
+export type EventsRequestContext = {
+  /** Host do request original (ex.: subdominio.primeirafila.app); repassado como X-Forwarded-Host para o backend resolver o tenant. */
+  requestHost?: string;
+  /** ID do tenant quando conhecido (ex.: do cookie em SSR); fallback quando o host nao resolve no backend (ex.: localhost). */
+  tenantId?: string;
+};
+
+export function listPublicEvents(
+  limit = 20,
+  context?: EventsRequestContext
+): Promise<PublicEvent[]> {
+  const headers: Record<string, string> = {};
+  if (context?.requestHost) headers["X-Forwarded-Host"] = context.requestHost;
+  if (context?.tenantId) headers["X-Tenant-Id"] = context.tenantId;
+  return api.get<PublicEvent[]>(`/v1/events?limit=${limit}`, {
+    headers: Object.keys(headers).length ? headers : undefined
+  });
 }
 
-export function getPublicEvent(eventId: string): Promise<PublicEvent> {
-  return api.get<PublicEvent>(`/v1/events/${eventId}`);
+export function getPublicEvent(
+  eventId: string,
+  context?: EventsRequestContext
+): Promise<PublicEvent> {
+  const headers: Record<string, string> = {};
+  if (context?.requestHost) headers["X-Forwarded-Host"] = context.requestHost;
+  if (context?.tenantId) headers["X-Tenant-Id"] = context.tenantId;
+  return api.get<PublicEvent>(`/v1/events/${eventId}`, {
+    headers: Object.keys(headers).length ? headers : undefined
+  });
 }
 
 // ─── Sessions & Seats ──────────────────────────────────────────

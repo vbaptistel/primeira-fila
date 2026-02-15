@@ -6,14 +6,19 @@ import { TenantAwareRequest, TenantResolverMiddleware } from "./tenant-resolver.
 function createMockTenancyBrandingService() {
   return {
     resolveBySubdomain: vi.fn(),
-    resolveByDomain: vi.fn()
+    resolveByDomain: vi.fn(),
+    getTenantOrNull: vi.fn()
   } as unknown as TenancyBrandingService;
 }
 
-function createMockRequest(host?: string, xForwardedHost?: string): TenantAwareRequest {
+function createMockRequest(
+  host?: string,
+  opts?: { xForwardedHost?: string; xTenantId?: string }
+): TenantAwareRequest {
   const headers: Record<string, string | string[] | undefined> = {};
   if (host) headers.host = host;
-  if (xForwardedHost) headers["x-forwarded-host"] = xForwardedHost;
+  if (opts?.xForwardedHost) headers["x-forwarded-host"] = opts.xForwardedHost;
+  if (opts?.xTenantId) headers["x-tenant-id"] = opts.xTenantId;
 
   return {
     headers,
@@ -60,7 +65,9 @@ describe("TenantResolverMiddleware", () => {
     it("deve preferir X-Forwarded-Host sobre Host", async () => {
       vi.mocked(tenancyBranding.resolveBySubdomain).mockResolvedValue(TENANT_FIXTURE as never);
 
-      const request = createMockRequest("localhost:3000", "acme.primeirafila.app");
+      const request = createMockRequest("localhost:3000", {
+        xForwardedHost: "acme.primeirafila.app"
+      });
       const next = vi.fn();
 
       await middleware.use(request, {} as FastifyReply, next);
@@ -187,6 +194,60 @@ describe("TenantResolverMiddleware", () => {
       await middleware.use(request, {} as FastifyReply, next);
 
       expect(request.resolvedTenant).toBeUndefined();
+      expect(next).toHaveBeenCalledOnce();
+    });
+  });
+
+  // --- Fallback X-Tenant-Id (quando Host nao resolve, ex.: localhost) ---
+
+  describe("fallback X-Tenant-Id", () => {
+    it("deve resolver tenant pelo header X-Tenant-Id quando Host nao resolve", async () => {
+      vi.mocked(tenancyBranding.resolveByDomain).mockResolvedValue(null);
+      vi.mocked(tenancyBranding.getTenantOrNull).mockResolvedValue(TENANT_FIXTURE as never);
+
+      const request = createMockRequest("localhost", {
+        xTenantId: "00000000-0000-0000-0000-000000000001"
+      });
+      const next = vi.fn();
+
+      await middleware.use(request, {} as FastifyReply, next);
+
+      expect(tenancyBranding.getTenantOrNull).toHaveBeenCalledWith(
+        "00000000-0000-0000-0000-000000000001"
+      );
+      expect(request.resolvedTenant).toEqual(TENANT_FIXTURE);
+      expect(next).toHaveBeenCalledOnce();
+    });
+
+    it("nao deve definir tenant quando X-Tenant-Id nao existe no banco", async () => {
+      vi.mocked(tenancyBranding.resolveByDomain).mockResolvedValue(null);
+      vi.mocked(tenancyBranding.getTenantOrNull).mockResolvedValue(null);
+
+      const request = createMockRequest("localhost", {
+        xTenantId: "00000000-0000-0000-0000-000000000099"
+      });
+      const next = vi.fn();
+
+      await middleware.use(request, {} as FastifyReply, next);
+
+      expect(request.resolvedTenant).toBeUndefined();
+      expect(next).toHaveBeenCalledOnce();
+    });
+
+    it("deve resolver pelo X-Tenant-Id mesmo quando nao ha host", async () => {
+      vi.mocked(tenancyBranding.getTenantOrNull).mockResolvedValue(TENANT_FIXTURE as never);
+
+      const request = createMockRequest(undefined, {
+        xTenantId: "00000000-0000-0000-0000-000000000001"
+      });
+      const next = vi.fn();
+
+      await middleware.use(request, {} as FastifyReply, next);
+
+      expect(tenancyBranding.getTenantOrNull).toHaveBeenCalledWith(
+        "00000000-0000-0000-0000-000000000001"
+      );
+      expect(request.resolvedTenant).toEqual(TENANT_FIXTURE);
       expect(next).toHaveBeenCalledOnce();
     });
   });

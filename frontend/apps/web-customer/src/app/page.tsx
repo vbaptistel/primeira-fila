@@ -1,14 +1,18 @@
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import { Skeleton } from "@primeira-fila/shared";
 import { getTenant } from "@/lib/get-tenant";
 import { EventCard } from "@/components/event-card";
-import { listPublicEvents } from "@/lib/api";
+import { listPublicEvents, resolveTenantByHost } from "@/lib/api";
 import type { PublicEvent } from "@/types/api";
 
-async function EventList() {
+async function EventList(context: { requestHost?: string; tenantId?: string }) {
   let events: PublicEvent[] = [];
   try {
-    events = await listPublicEvents();
+    events = await listPublicEvents(20, {
+      requestHost: context.requestHost,
+      tenantId: context.tenantId
+    });
   } catch {
     // Em caso de falha, mostra lista vazia
   }
@@ -56,7 +60,28 @@ function EventListSkeleton() {
 }
 
 export default async function HomePage() {
-  const tenant = await getTenant();
+  const [tenant, headersList] = await Promise.all([getTenant(), headers()]);
+  const requestHost =
+    headersList.get("x-forwarded-host") ?? headersList.get("host") ?? undefined;
+
+  let tenantId = tenant?.id ? tenant.id : undefined;
+  if (!tenantId && requestHost) {
+    try {
+      const resolved = await resolveTenantByHost(requestHost);
+      if (resolved.found && resolved.tenant?.id) {
+        tenantId = resolved.tenant.id;
+      }
+    } catch {
+      // Ignora falha de resolve; segue sem filtro por tenant
+    }
+  }
+  // Fallback para dev: em localhost, usar tenant fixo se definido (ex.: NEXT_PUBLIC_DEV_TENANT_ID)
+  if (!tenantId && requestHost?.startsWith("localhost")) {
+    const devTenantId = process.env.NEXT_PUBLIC_DEV_TENANT_ID;
+    if (devTenantId?.trim()) {
+      tenantId = devTenantId.trim();
+    }
+  }
 
   return (
     <div>
@@ -86,7 +111,7 @@ export default async function HomePage() {
         </div>
 
         <Suspense fallback={<EventListSkeleton />}>
-          <EventList />
+          <EventList requestHost={requestHost} tenantId={tenantId} />
         </Suspense>
       </section>
     </div>

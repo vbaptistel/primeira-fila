@@ -1,8 +1,10 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge, Separator } from "@primeira-fila/shared";
 import { Button } from "@primeira-fila/shared";
-import { getPublicEvent } from "@/lib/api";
+import { getPublicEvent, resolveTenantByHost } from "@/lib/api";
+import { getTenant } from "@/lib/get-tenant";
 import { formatCurrency, formatDate, formatTime } from "@/lib/format";
 import type { PublicEvent, PublicSession } from "@/types/api";
 
@@ -34,10 +36,32 @@ function SessionCard({ session, eventId }: { session: PublicSession; eventId: st
 
 export default async function EventDetailPage({ params }: PageProps) {
   const { eventId } = await params;
+  const [tenant, headersList] = await Promise.all([getTenant(), headers()]);
+  const requestHost =
+    headersList.get("x-forwarded-host") ?? headersList.get("host") ?? undefined;
+
+  let tenantId = tenant?.id ? tenant.id : undefined;
+  if (!tenantId && requestHost) {
+    try {
+      const resolved = await resolveTenantByHost(requestHost);
+      if (resolved.found && resolved.tenant?.id) {
+        tenantId = resolved.tenant.id;
+      }
+    } catch {
+      // Ignora falha de resolve
+    }
+  }
+  if (!tenantId && requestHost?.startsWith("localhost")) {
+    const devTenantId = process.env.NEXT_PUBLIC_DEV_TENANT_ID;
+    if (devTenantId?.trim()) tenantId = devTenantId.trim();
+  }
 
   let event: PublicEvent;
   try {
-    event = await getPublicEvent(eventId);
+    event = await getPublicEvent(eventId, {
+      requestHost,
+      tenantId
+    });
   } catch {
     notFound();
   }

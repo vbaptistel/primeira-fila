@@ -34,22 +34,38 @@ export class TenantResolverMiddleware implements NestMiddleware {
     next: () => void
   ): Promise<void> {
     const host = this.extractHost(request);
+    let tenant: Tenant | null = null;
 
-    if (!host) {
-      next();
-      return;
-    }
-
-    try {
-      const tenant = await this.resolve(host);
-      if (tenant) {
-        request.resolvedTenant = tenant;
+    if (host) {
+      try {
+        tenant = await this.resolve(host);
+      } catch (error) {
+        this.logger.warn(`Erro ao resolver tenant para host ${host}: ${String(error)}`);
       }
-    } catch (error) {
-      this.logger.warn(`Erro ao resolver tenant para host ${host}: ${String(error)}`);
+    }
+    if (!tenant) {
+      try {
+        tenant = await this.resolveFromHeader(request);
+      } catch (error) {
+        this.logger.warn(`Erro ao resolver tenant por X-Tenant-Id: ${String(error)}`);
+      }
+    }
+    if (tenant) {
+      request.resolvedTenant = tenant;
     }
 
     next();
+  }
+
+  /**
+   * Fallback quando o Host nao resolve (ex.: localhost em dev).
+   * Usa header X-Tenant-Id e so popula resolvedTenant se o tenant existir.
+   */
+  private async resolveFromHeader(request: FastifyRequest): Promise<Tenant | null> {
+    const raw = request.headers["x-tenant-id"];
+    const id = Array.isArray(raw) ? raw[0] : raw;
+    if (typeof id !== "string" || !id.trim()) return null;
+    return this.tenancyBrandingService.getTenantOrNull(id.trim());
   }
 
   private async resolve(host: string): Promise<Tenant | null> {
