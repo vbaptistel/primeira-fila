@@ -6,6 +6,7 @@ import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CommercialPoliciesService } from "../commercial-policies/commercial-policies.service";
 import { PaymentGatewayService } from "./payment-gateway.service";
 import { AuditService } from "../../common/audit/audit.service";
+import { EmailService } from "../../common/email/email.service";
 import { OrderStatus, PaymentStatus } from "../../generated/prisma/client";
 
 function stableStringify(value: unknown): string {
@@ -73,7 +74,8 @@ describe("OrdersService - idempotencia de pagamento", () => {
     gateway = { charge: vi.fn() } as unknown as PaymentGatewayService;
     const commercialPolicies = {} as CommercialPoliciesService;
     const auditService = { log: vi.fn().mockResolvedValue(undefined) } as unknown as AuditService;
-    service = new OrdersService(prisma, commercialPolicies, gateway, auditService);
+    const emailService = { sendOrderConfirmation: vi.fn().mockResolvedValue(undefined) } as unknown as EmailService;
+    service = new OrdersService(prisma, commercialPolicies, gateway, auditService, emailService);
   });
 
   describe("createOrderPayment - idempotencia", () => {

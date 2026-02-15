@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { AuditModule } from "./common/audit/audit.module";
 import { AuthModule } from "./common/auth/auth.module";
+import { EmailModule } from "./common/email/email.module";
 import { ProvisioningModule } from "./common/provisioning/provisioning.module";
 import { PrismaModule } from "./infrastructure/prisma/prisma.module";
 import { CheckInModule } from "./modules/check-in/check-in.module";
@@ -13,6 +14,7 @@ import { OrdersModule } from "./modules/orders/orders.module";
   imports: [
     AuditModule,
     AuthModule,
+    EmailModule,
     PrismaModule,
     ProvisioningModule,
     CommercialPoliciesModule,

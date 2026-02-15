@@ -21,6 +21,7 @@ import {
 } from "../../generated/prisma/client";
 import { createHash, randomUUID } from "node:crypto";
 import { AuditService } from "../../common/audit/audit.service";
+import { EmailService } from "../../common/email/email.service";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CommercialPoliciesService } from "../commercial-policies/commercial-policies.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
@@ -38,7 +39,8 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly commercialPoliciesService: CommercialPoliciesService,
     private readonly paymentGatewayService: PaymentGatewayService,
-    private readonly auditService: AuditService
+    private readonly auditService: AuditService,
+    private readonly emailService: EmailService
   ) {}
 
   async createOrder(idempotencyKeyHeader: string | undefined, dto: CreateOrderDto) {
@@ -232,8 +234,10 @@ export class OrdersService {
       return existingByIdempotency;
     }
 
+    let result;
+
     try {
-      return await this.prisma.$transaction(
+      result = await this.prisma.$transaction(
         async (tx) => {
           const order = await tx.order.findUnique({
             where: {
@@ -330,6 +334,12 @@ export class OrdersService {
 
       throw error;
     }
+
+    if (result?.order?.status === OrderStatus.PAID) {
+      await this.sendOrderConfirmationEmail(result.order);
+    }
+
+    return result;
   }
 
   async processWebhook(dto: WebhookPaymentDto) {
@@ -362,8 +372,13 @@ export class OrdersService {
       return { processed: false, reason: "Pagamento em estado terminal.", paymentId: payment.id };
     }
 
+    let wasApproved = false;
+    let webhookOrder = payment.order;
+
+    let result;
+
     try {
-      return await this.prisma.$transaction(
+      result = await this.prisma.$transaction(
         async (tx) => {
           const freshPayment = await tx.payment.findUnique({
             where: { id: payment.id },
@@ -407,6 +422,8 @@ export class OrdersService {
             freshPayment.order.status === OrderStatus.PENDING_PAYMENT
           ) {
             await this.approveOrder(tx, freshPayment.order);
+            wasApproved = true;
+            webhookOrder = freshPayment.order;
           }
 
           return { processed: true, paymentId: freshPayment.id };
@@ -422,6 +439,28 @@ export class OrdersService {
 
       throw error;
     }
+
+    if (wasApproved && webhookOrder) {
+      const freshOrder = await this.prisma.order.findUnique({
+        where: { id: webhookOrder.id },
+        include: {
+          session: { select: { name: true } },
+          items: { orderBy: { createdAt: "asc" } },
+          tickets: {
+            include: {
+              seat: { select: { sectorCode: true, rowLabel: true, seatNumber: true } },
+              session: { select: { name: true } }
+            }
+          }
+        }
+      });
+
+      if (freshOrder) {
+        await this.sendOrderConfirmationEmail(freshOrder);
+      }
+    }
+
+    return result;
   }
 
   async getOrderTickets(orderId: string) {
@@ -570,6 +609,72 @@ export class OrdersService {
       }
 
       throw error;
+    }
+  }
+
+  private async sendOrderConfirmationEmail(
+    order: {
+      id: string;
+      tenantId: string;
+      buyerName: string;
+      buyerEmail: string;
+      ticketSubtotalCents: number;
+      serviceFeeCents: number;
+      totalAmountCents: number;
+      currencyCode: string;
+      session?: { name: string };
+      tickets?: {
+        qrCode: string;
+        seat: { sectorCode: string; rowLabel: string; seatNumber: number };
+        session: { name: string };
+      }[];
+    }
+  ): Promise<void> {
+    try {
+      let sessionName = order.session?.name ?? "";
+      let tickets = order.tickets ?? [];
+
+      if (!order.session || !order.tickets?.length) {
+        const fullOrder = await this.prisma.order.findUnique({
+          where: { id: order.id },
+          include: {
+            session: { select: { name: true } },
+            tickets: {
+              include: {
+                seat: { select: { sectorCode: true, rowLabel: true, seatNumber: true } },
+                session: { select: { name: true } }
+              }
+            }
+          }
+        });
+
+        if (fullOrder) {
+          sessionName = fullOrder.session.name;
+          tickets = fullOrder.tickets;
+        }
+      }
+
+      await this.emailService.sendOrderConfirmation({
+        tenantId: order.tenantId,
+        orderId: order.id,
+        buyerName: order.buyerName,
+        buyerEmail: order.buyerEmail,
+        sessionName,
+        ticketSubtotalCents: order.ticketSubtotalCents,
+        serviceFeeCents: order.serviceFeeCents,
+        totalAmountCents: order.totalAmountCents,
+        currencyCode: order.currencyCode,
+        tickets: tickets.map((t) => ({
+          qrCode: t.qrCode,
+          sessionName: t.session.name,
+          seatSector: t.seat.sectorCode,
+          seatRow: t.seat.rowLabel,
+          seatNumber: t.seat.seatNumber
+        }))
+      });
+    } catch {
+      // Erro de e-mail nunca bloqueia o fluxo de compra
+      // O EmailService ja registra o erro no EmailLog
     }
   }
 
