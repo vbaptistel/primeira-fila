@@ -11,9 +11,12 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Query
+  Query,
+  UseGuards
 } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
+import { TenantRbacGuard } from "../../common/auth/tenant-rbac.guard";
+import { TenantRoles } from "../../common/auth/roles.decorator";
 import { CreateEventDayDto } from "./dto/create-event-day.dto";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { CreateHoldDto } from "./dto/create-hold.dto";
@@ -26,6 +29,8 @@ import { UpdateSessionSeatDto } from "./dto/update-session-seat.dto";
 import { EventsService } from "./events.service";
 
 @ApiTags("events-admin")
+@UseGuards(TenantRbacGuard)
+@TenantRoles("organizer_admin", "platform_admin")
 @Controller("tenants/:tenantId/events")
 export class EventsAdminController {
   constructor(private readonly eventsService: EventsService) {}

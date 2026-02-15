@@ -58,6 +58,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 |---|---|---|---|
 | GET | `/v1/me` | Sim | Qualquer autenticado |
 | GET | `/v1/tenants/{tenant_id}/commercial-policy` | Sim | Organizer/Admin |
+| POST | `/v1/tenants/{tenant_id}/commercial-policy/versions` | Sim | Organizer/Admin |
 | GET | `/v1/tenants/{tenant_id}/events` | Sim | Organizer/Admin |
 | POST | `/v1/tenants/{tenant_id}/events` | Sim | Organizer/Admin |
 | GET | `/v1/tenants/{tenant_id}/events/{event_id}` | Sim | Organizer/Admin |
@@ -119,6 +120,13 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Retorna versão ativa, regras de taxas, janelas de reembolso e parâmetros de repasse.
 - Quando não houver política customizada ativa, retorna `platform_default_v1` com `is_platform_default=true`.
 - Uso principal: backoffice e auditoria operacional.
+
+### Versionar Política Comercial
+`POST /v1/tenants/{tenant_id}/commercial-policy/versions`
+- Entrada: `version`, `serviceFeePercent`, `serviceFeeFixedCents`, `currencyCode?`, `timezone?`, `effectiveFrom?`.
+- Persistência versionada por tenant com `version` + `effective_from`.
+- Versão `platform_default_v1` é reservada e não pode ser sobrescrita.
+- Uso principal: governança comercial por tenant.
 
 ### Criar Hold
 `POST /v1/sessions/{session_id}/holds`
@@ -196,6 +204,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.10.0` - 2026-02-14 - Inclusão do endpoint `POST /v1/tenants/{tenant_id}/commercial-policy/versions` para versionamento de política por tenant.
 - `v1.9.0` - 2026-02-14 - Contrato de `POST /v1/orders/{order_id}/payments` detalhado com `Idempotency-Key`, método de pagamento e regra de confirmação síncrona aprovado/negado no MVP.
 - `v1.8.0` - 2026-02-14 - Refinamento do contrato de `POST /v1/orders` com header obrigatório `Idempotency-Key`, payload de comprador e resposta com snapshot financeiro do pedido.
 - `v1.7.0` - 2026-02-14 - Contrato de `POST /v1/sessions/{session_id}/holds` refinado para payload por assento, TTL de 10 minutos e sem quota genérica no MVP.

@@ -60,6 +60,24 @@ enum PaymentMethod {
   DEBIT_CARD
 }
 
+model CommercialPolicy {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  version             String   @db.VarChar(80)
+  isPlatformDefault   Boolean  @default(false) @map("is_platform_default")
+  serviceFeePercentBps Int     @map("service_fee_percent_bps")
+  serviceFeeFixedCents Int     @map("service_fee_fixed_cents")
+  currencyCode        String   @default("BRL") @map("currency_code") @db.VarChar(3)
+  timezone            String   @default("America/Sao_Paulo") @db.VarChar(64)
+  effectiveFrom       DateTime @map("effective_from") @db.Timestamptz(6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, version])
+  @@index([tenantId, effectiveFrom])
+  @@map("commercial_policies")
+}
+
 model Event {
   id          String      @id @default(uuid()) @db.Uuid
   tenantId    String      @map("tenant_id") @db.Uuid

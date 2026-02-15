@@ -22,6 +22,7 @@ import { UpdateEventDayDto } from "./dto/update-event-day.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { UpdateSessionDto } from "./dto/update-session.dto";
 import { UpdateSessionSeatDto } from "./dto/update-session-seat.dto";
+import { CommercialPoliciesService } from "../commercial-policies/commercial-policies.service";
 
 type SessionTimeline = {
   startsAt: Date;
@@ -40,9 +41,14 @@ const HOLD_TTL_MINUTES = 10;
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly commercialPoliciesService: CommercialPoliciesService
+  ) {}
 
   async createEvent(tenantId: string, dto: CreateEventDto) {
+    await this.commercialPoliciesService.ensureDefaultPolicy(tenantId);
+
     try {
       return await this.prisma.event.create({
         data: {

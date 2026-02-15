@@ -16,13 +16,11 @@ import {
 } from "../../generated/prisma/client";
 import { createHash } from "node:crypto";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
+import { CommercialPoliciesService } from "../commercial-policies/commercial-policies.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { CreateOrderPaymentDto } from "./dto/create-order-payment.dto";
 import { PaymentGatewayService } from "./payment-gateway.service";
 
-const DEFAULT_COMMERCIAL_POLICY_VERSION = "platform_default_v1";
-const DEFAULT_SERVICE_FEE_PERCENT = 0.1;
-const DEFAULT_SERVICE_FEE_FIXED_CENTS = 200;
 const IDEMPOTENCY_KEY_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -30,6 +28,7 @@ const IDEMPOTENCY_KEY_PATTERN =
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly commercialPoliciesService: CommercialPoliciesService,
     private readonly paymentGatewayService: PaymentGatewayService
   ) {}
 
@@ -126,8 +125,10 @@ export class OrdersService {
           }
 
           const ticketSubtotalCents = hold.heldSeats.length * hold.session.priceCents;
+          const activePolicy = await this.commercialPoliciesService.getActivePolicy(hold.tenantId, tx);
+          const serviceFeePercent = activePolicy.serviceFeePercentBps / 10_000;
           const serviceFeeCents = Math.round(
-            ticketSubtotalCents * DEFAULT_SERVICE_FEE_PERCENT + DEFAULT_SERVICE_FEE_FIXED_CENTS
+            ticketSubtotalCents * serviceFeePercent + activePolicy.serviceFeeFixedCents
           );
           const totalAmountCents = ticketSubtotalCents + serviceFeeCents;
 
@@ -146,7 +147,7 @@ export class OrdersService {
               ticketSubtotalCents,
               serviceFeeCents,
               totalAmountCents,
-              commercialPolicyVersion: DEFAULT_COMMERCIAL_POLICY_VERSION,
+              commercialPolicyVersion: activePolicy.version,
               holdExpiresAt: hold.expiresAt,
               items: {
                 createMany: {
