@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CustomDomainService } from "./custom-domain.service";
 import { TenancyBrandingService } from "./tenancy-branding.service";
-import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 
 function createMockPrisma() {
   return {
@@ -39,7 +39,7 @@ describe("CustomDomainService", () => {
     // Garantir que variaveis Vercel nao estao setadas nos testes
     delete process.env.VERCEL_TOKEN;
     delete process.env.VERCEL_TEAM_ID;
-    delete process.env.VERCEL_PROJECT_ID;
+    delete process.env.VERCEL_WEB_CUSTOMER_PROJECT_ID;
 
     prisma = createMockPrisma();
     tenancyBranding = createMockTenancyBrandingService();

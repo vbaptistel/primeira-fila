@@ -35,7 +35,7 @@ export class CustomDomainService {
   ) {
     this.vercelToken = process.env.VERCEL_TOKEN;
     this.vercelTeamId = process.env.VERCEL_TEAM_ID;
-    this.vercelProjectId = process.env.VERCEL_PROJECT_ID;
+    this.vercelProjectId = process.env.VERCEL_WEB_CUSTOMER_PROJECT_ID;
   }
 
   async addDomain(tenantId: string, domain: string): Promise<DomainStatusOutput> {
@@ -256,7 +256,7 @@ export class CustomDomainService {
       return false;
     }
 
-    const data = (await response.json()) as { verified?: boolean };
+    const data = (await response.json()) as { verified?: boolean; };
     return data.verified === true;
   }
 
