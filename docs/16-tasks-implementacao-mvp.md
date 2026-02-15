@@ -32,7 +32,7 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-015` | `US-011` | Backend | Implementar RBAC por tenant em endpoints críticos com claims do Supabase Auth. | Acesso cruzado bloqueado em testes de integração com token válido/inválido. | `TASK-006` | `CONCLUIDA` |
 | `TASK-016` | `US-010` | Backend | Implementar política comercial default `platform_default_v1`. | Tenant novo recebe política default automaticamente. | `TASK-001` | `CONCLUIDA` |
 | `TASK-017` | `US-010` | Backend | Versionar política comercial por tenant. | Alteração salva com `version` e `effective_from`. | `TASK-016` | `CONCLUIDA` |
-| `TASK-018` | `US-010` | Backend | Registrar snapshot financeiro no pedido. | Pedido persiste valores + versão da política aplicada. | `TASK-009`,`TASK-017` | `TODO` |
+| `TASK-018` | `US-010` | Backend | Registrar snapshot financeiro no pedido. | Pedido persiste valores + versão da política aplicada. | `TASK-009`,`TASK-017` | `CONCLUIDA` |
 | `TASK-019` | `US-009` | Backend | Implementar reembolso manual com `reason_code`. | Reembolso respeita matriz e atualiza estados. | `TASK-011`,`TASK-018` | `TODO` |
 | `TASK-020` | `US-009` | Backend | Auditar ações de reembolso e check-in. | Auditoria registra ator, timestamp e ação. | `TASK-014`,`TASK-019` | `TODO` |
 | `TASK-021` | `US-001` | Frontend Customer | Criar home/listagem de eventos no `web-customer`. | Listagem de sessões públicas funcional. | `TASK-002`,`TASK-006` | `TODO` |
@@ -105,6 +105,8 @@ Cadência sugerida: sprints de 2 semanas.
 - Dependências externas podem deslocar tasks críticas de infraestrutura e integração.
 
 ## Changelog
+- `v1.20.0` - 2026-02-15 - `TASK-018` atualizada para `CONCLUIDA`: snapshot financeiro já implementado no pedido com `ticketSubtotalCents`, `serviceFeeCents`, `totalAmountCents` e `commercialPolicyVersion` persistidos no `Order` a partir da política ativa no momento da criação.
+- `v1.19.0` - 2026-02-15 - Hardening Sprint 03: `TASK-016` corrigida com `TenantProvisioningInterceptor` global que garante política default automaticamente na primeira requisição autenticada de cada tenant (cache em memória); `TASK-015` fortalecida com 20 testes unitários do `TenantRbacGuard` cobrindo autenticação, controle de roles, isolamento de tenant (acesso cruzado bloqueado) e bypass de `platform_admin`.
 - `v1.18.0` - 2026-02-14 - Sprint 03 concluída no backend com `TASK-015` (RBAC por tenant com claims JWT), `TASK-016` (default `platform_default_v1` automático), `TASK-017` (versionamento de política por tenant), `TASK-058` (endpoint de consulta de política ativa/default) e `TASK-035` (logs estruturados com `trace_id`).
 - `v1.17.0` - 2026-02-14 - `TASK-010` concluída com endpoint `POST /v1/orders/{order_id}/payments`, idempotência por `Idempotency-Key`, persistência de `Payment` e atualização transacional de `Order/Hold/SessionSeat` para cenários aprovado/negado.
 - `v1.16.0` - 2026-02-14 - `TASK-009` concluída com endpoint `POST /v1/orders`, validação de `Idempotency-Key`, conversão de `hold` em pedido `pending_payment` e persistência de itens financeiros.
