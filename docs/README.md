@@ -27,6 +27,7 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 ## Complementos Técnicos
 - ADRs: `docs/adr/README.md`
 - Template ADR: `docs/adr/0000-template.md`
+- Postman Collection: `postman/README.md` (testes de API)
 
 ## Convenções
 - Idioma oficial: Português-BR.

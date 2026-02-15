@@ -45,6 +45,10 @@ npm run db:generate --workspace @primeira-fila/backend
 npm run db:push --workspace @primeira-fila/backend
 ```
 
+## API (Postman)
+
+Collection e environment para testar as APIs: [postman/README.md](postman/README.md)
+
 ## Regra de fronteira
 
 - `backend/*` não pode importar nada de `frontend/*`.

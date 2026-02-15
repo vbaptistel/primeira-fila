@@ -1,0 +1,661 @@
+{
+  "info": {
+    "name": "Primeira Fila API",
+    "description": "Collection para testar as APIs do backend Primeira Fila.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001" },
+    { "key": "jwtToken", "value": "" },
+    { "key": "tenantId", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "eventDayId", "value": "" },
+    { "key": "sessionId", "value": "" },
+    { "key": "seatId", "value": "" },
+    { "key": "holdId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "hostForTenant", "value": "acme.primeira-fila.com" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "Verifica se o backend está respondendo."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenancy & Branding",
+      "item": [
+        {
+          "name": "Create Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"00000000-0000-0000-0000-000000000001\",\n  \"name\": \"Minha Casa de Shows\",\n  \"slug\": \"minha-casa-de-shows\",\n  \"subdomain\": \"minhacasa\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants",
+            "description": "Cria um tenant. Requer role platform_admin."
+          }
+        },
+        {
+          "name": "Get Tenant",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}",
+            "description": "Obtém tenant por ID. Requer organizer_admin ou platform_admin."
+          }
+        },
+        {
+          "name": "Update Tenant",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nome Atualizado\",\n  \"primaryColor\": \"#3B82F6\",\n  \"secondaryColor\": \"#FFFFFF\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}",
+            "description": "Atualiza tenant. Requer organizer_admin ou platform_admin."
+          }
+        },
+        {
+          "name": "Set Custom Domain",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"domain\": \"ingressos.meuevento.com.br\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/custom-domain",
+            "description": "Define domínio customizado. Requer organizer_admin ou platform_admin."
+          }
+        },
+        {
+          "name": "Remove Custom Domain",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/custom-domain",
+            "description": "Remove domínio customizado. Retorna 204. Requer organizer_admin ou platform_admin."
+          }
+        },
+        {
+          "name": "Verify Custom Domain",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/custom-domain/verify",
+            "description": "Verifica domínio customizado. Requer organizer_admin ou platform_admin."
+          }
+        },
+        {
+          "name": "Get Custom Domain Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/custom-domain/status",
+            "description": "Obtém status do domínio customizado. Requer organizer_admin ou platform_admin."
+          }
+        },
+        {
+          "name": "Resolve Tenant (by subdomain)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/public/tenants/resolve?subdomain=minhacasa",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "public", "tenants", "resolve"],
+              "query": [
+                { "key": "subdomain", "value": "minhacasa" }
+              ]
+            },
+            "description": "Resolve tenant por subdomínio. Rota pública."
+          }
+        },
+        {
+          "name": "Resolve Tenant (by domain)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/public/tenants/resolve?domain=ingressos.meuevento.com.br",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "public", "tenants", "resolve"],
+              "query": [
+                { "key": "domain", "value": "ingressos.meuevento.com.br" }
+              ]
+            },
+            "description": "Resolve tenant por domínio customizado. Rota pública."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events Admin",
+      "item": [
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Show de Rock\",\n  \"slug\": \"show-de-rock\",\n  \"description\": \"Noite de rock in roll\",\n  \"timezone\": \"America/Sao_Paulo\",\n  \"status\": \"DRAFT\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events",
+            "description": "Cria evento. status: DRAFT | PUBLISHED | ARCHIVED"
+          }
+        },
+        {
+          "name": "List Tenant Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events",
+            "description": "Lista eventos do tenant."
+          }
+        },
+        {
+          "name": "Get Event",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}",
+            "description": "Obtém evento por ID."
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Show de Rock Atualizado\",\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}",
+            "description": "Atualiza evento."
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}",
+            "description": "Remove evento. Retorna 204."
+          }
+        },
+        {
+          "name": "Create Event Day",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-03-15\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days",
+            "description": "Cria dia do evento. status: ACTIVE | CANCELLED"
+          }
+        },
+        {
+          "name": "List Event Days",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days",
+            "description": "Lista dias do evento."
+          }
+        },
+        {
+          "name": "Get Event Day",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}",
+            "description": "Obtém dia do evento."
+          }
+        },
+        {
+          "name": "Update Event Day",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-03-16\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}",
+            "description": "Atualiza dia do evento."
+          }
+        },
+        {
+          "name": "Delete Event Day",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}",
+            "description": "Remove dia do evento. Retorna 204."
+          }
+        },
+        {
+          "name": "Create Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sessão 20h\",\n  \"startsAt\": \"2025-03-15T20:00:00.000Z\",\n  \"endsAt\": \"2025-03-15T23:00:00.000Z\",\n  \"salesStartsAt\": \"2025-02-01T00:00:00.000Z\",\n  \"salesEndsAt\": \"2025-03-15T19:00:00.000Z\",\n  \"priceCents\": 5000,\n  \"currencyCode\": \"BRL\",\n  \"capacity\": 100,\n  \"status\": \"DRAFT\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions",
+            "description": "Cria sessão. status: DRAFT | PUBLISHED | CANCELLED"
+          }
+        },
+        {
+          "name": "List Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions",
+            "description": "Lista sessões do dia."
+          }
+        },
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}",
+            "description": "Obtém sessão por ID."
+          }
+        },
+        {
+          "name": "Update Session",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sessão 20h Atualizada\",\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}",
+            "description": "Atualiza sessão."
+          }
+        },
+        {
+          "name": "Delete Session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}",
+            "description": "Remove sessão. Retorna 204."
+          }
+        },
+        {
+          "name": "Create Session Seat",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sectorCode\": \"PISTA\",\n  \"rowLabel\": \"A\",\n  \"seatNumber\": 1,\n  \"status\": \"AVAILABLE\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}/seats",
+            "description": "Cria assento. status: AVAILABLE | HELD | SOLD | BLOCKED"
+          }
+        },
+        {
+          "name": "List Session Seats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}/seats",
+            "description": "Lista assentos da sessão."
+          }
+        },
+        {
+          "name": "Update Session Seat",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"BLOCKED\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}/seats/{{seatId}}",
+            "description": "Atualiza assento (apenas status)."
+          }
+        },
+        {
+          "name": "Delete Session Seat",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/events/{{eventId}}/days/{{eventDayId}}/sessions/{{sessionId}}/seats/{{seatId}}",
+            "description": "Remove assento. Retorna 204."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events Público",
+      "item": [
+        {
+          "name": "List Public Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Host", "value": "{{hostForTenant}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/events?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "events"],
+              "query": [
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Lista eventos públicos. Tenant resolvido pelo Host (subdomínio ou domínio customizado)."
+          }
+        },
+        {
+          "name": "Get Public Event",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Host", "value": "{{hostForTenant}}" }
+            ],
+            "url": "{{baseUrl}}/v1/events/{{eventId}}",
+            "description": "Obtém evento público. Tenant resolvido pelo Host."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions Público",
+      "item": [
+        {
+          "name": "Create Hold",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seats\": [\n    { \"sector\": \"PISTA\", \"row\": \"A\", \"number\": 1 },\n    { \"sector\": \"PISTA\", \"row\": \"A\", \"number\": 2 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/v1/sessions/{{sessionId}}/holds",
+            "description": "Cria hold de assentos. Retorna holdId para usar em Create Order."
+          }
+        },
+        {
+          "name": "Get Session Seats (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/v1/sessions/{{sessionId}}/seats",
+            "description": "Lista assentos da sessão para seleção (público)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "order-{{$randomUUID}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"holdId\": \"{{holdId}}\",\n  \"buyer\": {\n    \"name\": \"João Silva\",\n    \"email\": \"joao@email.com\",\n    \"document\": \"12345678900\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/v1/orders",
+            "description": "Cria pedido. Requer holdId válido. Use header Idempotency-Key."
+          }
+        },
+        {
+          "name": "Create Order Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "payment-{{$randomUUID}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"PIX\",\n  \"gateway\": \"mock_gateway\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/orders/{{orderId}}/payments",
+            "description": "Registra pagamento. method: PIX | CREDIT_CARD | DEBIT_CARD. Use Idempotency-Key."
+          }
+        },
+        {
+          "name": "Get Order by Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/orders/{{orderId}}?token=TOKEN&email=joao@email.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "orders", "{{orderId}}"],
+              "query": [
+                { "key": "token", "value": "TOKEN" },
+                { "key": "email", "value": "joao@email.com" }
+              ]
+            },
+            "description": "Obtém pedido por token e email (enviado por magic link)."
+          }
+        },
+        {
+          "name": "Get Order Tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/orders/{{orderId}}/tickets?token=TOKEN&email=joao@email.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "orders", "{{orderId}}", "tickets"],
+              "query": [
+                { "key": "token", "value": "TOKEN" },
+                { "key": "email", "value": "joao@email.com" }
+              ]
+            },
+            "description": "Obtém ingressos do pedido por token e email."
+          }
+        },
+        {
+          "name": "Request Order Access",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"joao@email.com\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/orders/request-access",
+            "description": "Solicita acesso ao pedido. Envia magic link por email."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Refunds",
+      "item": [
+        {
+          "name": "Create Refund",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reasonCode\": \"solicitacao_cliente\",\n  \"reasonDescription\": \"Cliente solicitou reembolso por motivos pessoais.\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/orders/{{orderId}}/refunds",
+            "description": "Cria solicitação de reembolso. Requer organizer_admin ou platform_admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Payment Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerPaymentId\": \"pay_abc123\",\n  \"status\": \"APPROVED\",\n  \"provider\": \"mock_gateway\",\n  \"payload\": {}\n}"
+            },
+            "url": "{{baseUrl}}/v1/webhooks/payments",
+            "description": "Webhook de pagamento. status: PENDING | APPROVED | DENIED | REFUNDED | ERROR"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Commercial Policy",
+      "item": [
+        {
+          "name": "Get Commercial Policy",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/commercial-policy",
+            "description": "Obtém política comercial do tenant."
+          }
+        },
+        {
+          "name": "Create Policy Version",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": \"v1.0\",\n  \"serviceFeePercent\": 10,\n  \"serviceFeeFixedCents\": 100,\n  \"currencyCode\": \"BRL\",\n  \"timezone\": \"America/Sao_Paulo\",\n  \"effectiveFrom\": \"2025-01-01T00:00:00.000Z\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/tenants/{{tenantId}}/commercial-policy/versions",
+            "description": "Cria nova versão da política comercial."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Check-in",
+      "item": [
+        {
+          "name": "Validate Check-in",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrCode\": \"TICKET-QR-CODE-HERE\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/check-in",
+            "description": "Valida check-in por QR code. Requer operator, organizer_admin ou platform_admin."
+          }
+        }
+      ]
+    }
+  ]
+}

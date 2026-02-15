@@ -45,7 +45,7 @@ O backend usa apenas **verificação local do JWT** (`auth.getClaims(token)`), s
 
 \* Exceto se `AUTH_JWT_INSECURE_DECODE=true` (modo inseguro).
 
-**Não usar no backend para este fluxo:** `SUPABASE_SERVICE_ROLE_KEY` / secret key (privilegiada; só se o backend precisar de operações admin no Auth). O verifier atual não a utiliza.
+**Não usar no backend para este fluxo:** `SUPABASE_SERVICE_ROLE_KEY` / secret key (privilegiada; só se o backend precisar de operações admin no Auth). O verifier atual não a utiliza. Para **provisionamento de usuários** (criar ou alterar `app_metadata.role` / `app_metadata.tenant_id`), use o script `backend/scripts/set-admin-user.ts` com `SUPABASE_SERVICE_ROLE_KEY` apenas em ambiente local ou em execução controlada; ver `backend/scripts/README.md`.
 
 ## Configuração do PostgreSQL (Supabase)
 - Conexão obrigatória com SSL (`sslmode=require`).
