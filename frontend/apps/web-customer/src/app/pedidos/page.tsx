@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Button, Input, Label } from "@primeira-fila/shared";
-import { requestOrderAccess } from "@/lib/api";
-import { ApiClientError } from "@/lib/api-client";
+import { requestOrderAccessAction } from "./actions";
 
 export default function OrdersAccessPage() {
   const [email, setEmail] = useState("");
@@ -22,18 +21,13 @@ export default function OrdersAccessPage() {
     setLoading(true);
     setError(null);
 
-    try {
-      await requestOrderAccess(email.trim().toLowerCase());
+    const result = await requestOrderAccessAction(email.trim().toLowerCase());
+    if (result.success) {
       setSuccess(true);
-    } catch (err) {
-      if (err instanceof ApiClientError) {
-        setError(err.message);
-      } else {
-        setError("Erro ao solicitar acesso. Tente novamente.");
-      }
-    } finally {
-      setLoading(false);
+    } else {
+      setError(result.error);
     }
+    setLoading(false);
   }, [email]);
 
   return (

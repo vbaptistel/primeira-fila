@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Skeleton } from "@primeira-fila/shared";
-import { getSessionSeats, createHold } from "@/lib/api";
-import { ApiClientError } from "@/lib/api-client";
+import { Badge, Button } from "@primeira-fila/shared";
+import { createHoldAction } from "./actions";
 import type { PublicSessionSeat, SessionSeatStatus } from "@/types/api";
 
 type SeatSelectionClientProps = {
   eventId: string;
   sessionId: string;
+  seats: PublicSessionSeat[];
 };
 
 type SectorGroup = {
@@ -47,20 +47,11 @@ function getSeatStatusColor(status: SessionSeatStatus, isSelected: boolean): str
   }
 }
 
-export function SeatSelectionClient({ eventId, sessionId }: SeatSelectionClientProps) {
+export function SeatSelectionClient({ eventId, sessionId, seats }: SeatSelectionClientProps) {
   const router = useRouter();
-  const [seats, setSeats] = useState<PublicSessionSeat[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getSessionSeats(sessionId)
-      .then(setSeats)
-      .catch(() => setError("Erro ao carregar assentos."))
-      .finally(() => setLoading(false));
-  }, [sessionId]);
 
   const toggleSeat = useCallback((seat: PublicSessionSeat) => {
     if (seat.status !== "AVAILABLE") return;
@@ -91,33 +82,16 @@ export function SeatSelectionClient({ eventId, sessionId }: SeatSelectionClientP
         number: s.seatNumber
       }));
 
-    try {
-      const hold = await createHold(sessionId, selectedSeatData);
-      router.push(`/checkout/${hold.holdId}?eventId=${eventId}&sessionId=${sessionId}`);
-    } catch (err) {
-      if (err instanceof ApiClientError) {
-        setError(err.message);
-      } else {
-        setError("Erro ao reservar assentos. Tente novamente.");
-      }
+    const result = await createHoldAction(sessionId, selectedSeatData);
+    if (result.success) {
+      router.push(`/checkout/${result.hold.holdId}?eventId=${eventId}&sessionId=${sessionId}`);
+    } else {
+      setError(result.error);
       setCreating(false);
     }
   };
 
   const sectors = groupBySector(seats);
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-        <Skeleton className="h-8 w-64 mb-6" />
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 w-full" />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">

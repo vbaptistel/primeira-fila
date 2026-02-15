@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import { Resend } from "resend";
 import { render } from "@react-email/render";
+import { Resend } from "resend";
 import { EmailStatus } from "../../generated/prisma/client";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { RESEND_CLIENT } from "./resend.provider";
@@ -44,7 +44,7 @@ export class EmailService {
     private readonly prisma: PrismaService,
     @Inject(RESEND_CLIENT) private readonly resend: Resend
   ) {
-    this.emailFrom = process.env["EMAIL_FROM"] ?? "Primeira Fila <noreply@primeirafila.com>";
+    this.emailFrom = process.env["EMAIL_FROM"] ?? "Primeira Fila <noreply@primeirafila.app>";
   }
 
   async sendOrderConfirmation(data: OrderEmailData): Promise<void> {
@@ -194,7 +194,7 @@ export class EmailService {
     }
   }
 
-  async resendEmail(emailLogId: string): Promise<{ success: boolean; error?: string }> {
+  async resendEmail(emailLogId: string): Promise<{ success: boolean; error?: string; }> {
     const emailLog = await this.prisma.emailLog.findUnique({
       where: { id: emailLogId }
     });
@@ -209,19 +209,19 @@ export class EmailService {
 
     const order = emailLog.orderId
       ? await this.prisma.order.findUnique({
-          where: { id: emailLog.orderId },
-          include: {
-            session: { select: { name: true } },
-            tickets: {
-              include: {
-                seat: {
-                  select: { sectorCode: true, rowLabel: true, seatNumber: true }
-                },
-                session: { select: { name: true } }
-              }
+        where: { id: emailLog.orderId },
+        include: {
+          session: { select: { name: true } },
+          tickets: {
+            include: {
+              seat: {
+                select: { sectorCode: true, rowLabel: true, seatNumber: true }
+              },
+              session: { select: { name: true } }
             }
           }
-        })
+        }
+      })
       : null;
 
     if (!order) {

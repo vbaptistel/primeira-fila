@@ -27,6 +27,15 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TraceLoggingInterceptor());
   app.useGlobalFilters(new TraceExceptionFilter());
 
+  const corsOrigins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? [
+    "http://localhost:3000"
+  ];
+  app.enableCors({
+    origin: corsOrigins.length > 0 ? corsOrigins : true,
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Idempotency-Key", "Host"]
+  });
+
   const config = new DocumentBuilder()
     .setTitle("Primeira Fila API")
     .setDescription("API do backend do projeto Primeira Fila")

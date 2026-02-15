@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { getOrderByToken } from "@/lib/api";
 import { OrderDetailClient } from "./order-detail-client";
 
 type PageProps = {
@@ -20,5 +22,12 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
     );
   }
 
-  return <OrderDetailClient orderId={orderId} token={token} email={email} />;
+  let order;
+  try {
+    order = await getOrderByToken(orderId, token, email);
+  } catch {
+    notFound();
+  }
+
+  return <OrderDetailClient order={order} />;
 }

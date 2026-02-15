@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label, Separator } from "@primeira-fila/shared";
-import { createOrder, createPayment } from "@/lib/api";
-import { ApiClientError } from "@/lib/api-client";
+import { createOrderAction, createPaymentAction } from "./actions";
 
 type CheckoutClientProps = {
   holdId: string;
@@ -81,29 +80,25 @@ export function CheckoutClient({ holdId }: CheckoutClientProps) {
     setError(null);
     setStep("processando");
 
-    try {
-      const idempotencyKey = generateIdempotencyKey();
-      const order = await createOrder(
-        {
-          holdId,
-          buyer: {
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
-            document: document.trim() || undefined
-          }
-        },
-        idempotencyKey
-      );
+    const idempotencyKey = generateIdempotencyKey();
+    const result = await createOrderAction(
+      {
+        holdId,
+        buyer: {
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          document: document.trim() || undefined
+        }
+      },
+      idempotencyKey
+    );
 
-      setOrderId(order.id);
-      setHoldExpiresAt(order.holdExpiresAt);
+    if (result.success) {
+      setOrderId(result.order.id);
+      setHoldExpiresAt(result.order.holdExpiresAt);
       setStep("pagamento");
-    } catch (err) {
-      if (err instanceof ApiClientError) {
-        setError(err.message);
-      } else {
-        setError("Erro ao criar pedido. Tente novamente.");
-      }
+    } else {
+      setError(result.error);
       setStep("dados");
     }
   }, [holdId, name, email, document]);
@@ -114,17 +109,16 @@ export function CheckoutClient({ holdId }: CheckoutClientProps) {
     setError(null);
     setStep("processando");
 
-    try {
-      const idempotencyKey = generateIdempotencyKey();
-      const result = await createPayment(
-        orderId,
-        { method: paymentMethod },
-        idempotencyKey
-      );
+    const idempotencyKey = generateIdempotencyKey();
+    const paymentResult = await createPaymentAction(
+      orderId,
+      { method: paymentMethod },
+      idempotencyKey
+    );
 
-      if (result.order.status === "PAID") {
+    if (paymentResult.success) {
+      if (paymentResult.result.order.status === "PAID") {
         setStep("concluido");
-        // Redirecionar para pagina de confirmacao
         setTimeout(() => {
           router.push(`/pedidos/${orderId}?token=confirmation&email=${encodeURIComponent(email)}`);
         }, 2000);
@@ -132,12 +126,8 @@ export function CheckoutClient({ holdId }: CheckoutClientProps) {
         setError("Pagamento nao aprovado. Tente outro metodo.");
         setStep("pagamento");
       }
-    } catch (err) {
-      if (err instanceof ApiClientError) {
-        setError(err.message);
-      } else {
-        setError("Erro ao processar pagamento. Tente novamente.");
-      }
+    } else {
+      setError(paymentResult.error);
       setStep("pagamento");
     }
   }, [orderId, paymentMethod, router, email]);

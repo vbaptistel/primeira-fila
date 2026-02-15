@@ -1,17 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Badge, Separator, Skeleton } from "@primeira-fila/shared";
-import { getOrderByToken } from "@/lib/api";
+import { Badge, Separator } from "@primeira-fila/shared";
 import { formatCurrency, formatDateTime } from "@/lib/format";
-import { ApiClientError } from "@/lib/api-client";
 import type { OrderResponse } from "@/types/api";
 
 type OrderDetailClientProps = {
-  orderId: string;
-  token: string;
-  email: string;
+  order: OrderResponse;
 };
 
 function getStatusBadge(status: string) {
@@ -29,47 +24,7 @@ function getStatusBadge(status: string) {
   }
 }
 
-export function OrderDetailClient({ orderId, token, email }: OrderDetailClientProps) {
-  const [order, setOrder] = useState<OrderResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getOrderByToken(orderId, token, email)
-      .then(setOrder)
-      .catch((err) => {
-        if (err instanceof ApiClientError) {
-          setError(err.message);
-        } else {
-          setError("Erro ao carregar pedido.");
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [orderId, token, email]);
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-10 space-y-6">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  if (error || !order) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-[var(--pf-color-text)]">
-          Nao foi possivel acessar o pedido
-        </h1>
-        <p className="mt-2 text-[var(--pf-color-muted-text)]">
-          {error ?? "Token invalido ou expirado. Solicite um novo link de acesso."}
-        </p>
-      </div>
-    );
-  }
-
+export function OrderDetailClient({ order }: OrderDetailClientProps) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
       {/* Header */}
