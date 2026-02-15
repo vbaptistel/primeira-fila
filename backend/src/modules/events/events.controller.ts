@@ -12,8 +12,10 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards
 } from "@nestjs/common";
+import { TenantAwareRequest } from "../../common/tenancy/tenant-resolver.middleware";
 import { ApiTags } from "@nestjs/swagger";
 import { TenantRbacGuard } from "../../common/auth/tenant-rbac.guard";
 import { TenantRoles } from "../../common/auth/roles.decorator";
@@ -225,14 +227,20 @@ export class EventsPublicController {
   @Get()
   listPublicEvents(
     @Query("limit", new DefaultValuePipe(20), ParseIntPipe)
-    limit: number
+    limit: number,
+    @Req() request: TenantAwareRequest
   ) {
-    return this.eventsService.listPublicEvents(limit);
+    const tenantId = request.resolvedTenant?.id;
+    return this.eventsService.listPublicEvents(limit, tenantId);
   }
 
   @Get(":eventId")
-  getPublicEvent(@Param("eventId", ParseUUIDPipe) eventId: string) {
-    return this.eventsService.getPublicEvent(eventId);
+  getPublicEvent(
+    @Param("eventId", ParseUUIDPipe) eventId: string,
+    @Req() request: TenantAwareRequest
+  ) {
+    const tenantId = request.resolvedTenant?.id;
+    return this.eventsService.getPublicEvent(eventId, tenantId);
   }
 }
 

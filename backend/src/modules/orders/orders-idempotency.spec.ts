@@ -75,7 +75,8 @@ describe("OrdersService - idempotencia de pagamento", () => {
     const commercialPolicies = {} as CommercialPoliciesService;
     const auditService = { log: vi.fn().mockResolvedValue(undefined) } as unknown as AuditService;
     const emailService = { sendOrderConfirmation: vi.fn().mockResolvedValue(undefined) } as unknown as EmailService;
-    service = new OrdersService(prisma, commercialPolicies, gateway, auditService, emailService);
+    const magicLinkTokenService = { generateToken: vi.fn(), validateToken: vi.fn(), buildOrderAccessUrl: vi.fn() } as never;
+    service = new OrdersService(prisma, commercialPolicies, gateway, auditService, emailService, magicLinkTokenService);
   });
 
   describe("createOrderPayment - idempotencia", () => {

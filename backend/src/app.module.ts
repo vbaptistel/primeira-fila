@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { AuditModule } from "./common/audit/audit.module";
 import { AuthModule } from "./common/auth/auth.module";
 import { EmailModule } from "./common/email/email.module";
+import { MagicLinkModule } from "./common/magic-link/magic-link.module";
 import { ProvisioningModule } from "./common/provisioning/provisioning.module";
 import { TenantResolverMiddleware } from "./common/tenancy/tenant-resolver.middleware";
 import { PrismaModule } from "./infrastructure/prisma/prisma.module";
@@ -17,6 +18,7 @@ import { TenancyBrandingModule } from "./modules/tenancy-branding/tenancy-brandi
     AuditModule,
     AuthModule,
     EmailModule,
+    MagicLinkModule,
     PrismaModule,
     ProvisioningModule,
     TenancyBrandingModule,

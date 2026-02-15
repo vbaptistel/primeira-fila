@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   GoneException,
   Injectable,
   NotFoundException
@@ -22,6 +23,7 @@ import {
 import { createHash, randomUUID } from "node:crypto";
 import { AuditService } from "../../common/audit/audit.service";
 import { EmailService } from "../../common/email/email.service";
+import { MagicLinkTokenService } from "../../common/magic-link/magic-link-token.service";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CommercialPoliciesService } from "../commercial-policies/commercial-policies.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
@@ -40,7 +42,8 @@ export class OrdersService {
     private readonly commercialPoliciesService: CommercialPoliciesService,
     private readonly paymentGatewayService: PaymentGatewayService,
     private readonly auditService: AuditService,
-    private readonly emailService: EmailService
+    private readonly emailService: EmailService,
+    private readonly magicLinkTokenService: MagicLinkTokenService
   ) {}
 
   async createOrder(idempotencyKeyHeader: string | undefined, dto: CreateOrderDto) {
@@ -463,7 +466,96 @@ export class OrdersService {
     return result;
   }
 
-  async getOrderTickets(orderId: string) {
+  async getOrderByToken(orderId: string, token: string, email: string): Promise<object> {
+    if (!token || !email) {
+      throw new ForbiddenException("Token e email sao obrigatorios para acessar o pedido.");
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const isValid = this.magicLinkTokenService.validateToken(orderId, normalizedEmail, token);
+
+    if (!isValid) {
+      throw new ForbiddenException("Token invalido ou expirado.");
+    }
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        session: true,
+        items: { orderBy: { createdAt: "asc" } },
+        tickets: {
+          include: {
+            seat: true,
+            session: true
+          },
+          orderBy: { createdAt: "asc" }
+        }
+      }
+    });
+
+    if (!order || order.buyerEmail !== normalizedEmail) {
+      throw new NotFoundException("Pedido nao encontrado.");
+    }
+
+    return {
+      id: order.id,
+      status: order.status,
+      buyerName: order.buyerName,
+      buyerEmail: order.buyerEmail,
+      ticketSubtotalCents: order.ticketSubtotalCents,
+      serviceFeeCents: order.serviceFeeCents,
+      totalAmountCents: order.totalAmountCents,
+      currencyCode: order.currencyCode,
+      createdAt: order.createdAt,
+      session: {
+        id: order.session.id,
+        name: order.session.name,
+        startsAt: order.session.startsAt,
+        endsAt: order.session.endsAt
+      },
+      items: order.items.map((item) => ({
+        id: item.id,
+        unitPriceCents: item.unitPriceCents,
+        currencyCode: item.currencyCode
+      })),
+      tickets: order.tickets.map((ticket) => ({
+        id: ticket.id,
+        qrCode: ticket.qrCode,
+        status: ticket.status,
+        seat: {
+          id: ticket.seat.id,
+          sectorCode: ticket.seat.sectorCode,
+          rowLabel: ticket.seat.rowLabel,
+          seatNumber: ticket.seat.seatNumber
+        },
+        session: {
+          id: ticket.session.id,
+          name: ticket.session.name,
+          startsAt: ticket.session.startsAt,
+          endsAt: ticket.session.endsAt
+        }
+      }))
+    };
+  }
+
+  async getOrderTickets(orderId: string, token?: string, email?: string) {
+    if (token && email) {
+      const normalizedEmail = email.toLowerCase().trim();
+      const isValid = this.magicLinkTokenService.validateToken(orderId, normalizedEmail, token);
+
+      if (!isValid) {
+        throw new ForbiddenException("Token invalido ou expirado.");
+      }
+
+      const order = await this.prisma.order.findUnique({
+        where: { id: orderId }
+      });
+
+      if (!order || order.buyerEmail !== normalizedEmail) {
+        throw new NotFoundException("Pedido nao encontrado.");
+      }
+    }
+
     const order = await this.prisma.order.findUnique({
       where: { id: orderId }
     });
@@ -496,6 +588,60 @@ export class OrdersService {
     });
 
     return tickets;
+  }
+
+  async requestOrderAccess(email: string): Promise<{ message: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const orders = await this.prisma.order.findMany({
+      where: {
+        buyerEmail: normalizedEmail,
+        status: {
+          in: [OrderStatus.PAID, OrderStatus.PENDING_PAYMENT]
+        }
+      },
+      include: {
+        session: { select: { name: true } },
+        tenant: { select: { subdomain: true, customDomain: true } }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    // Sempre retorna sucesso para nao vazar informacao sobre existencia de pedidos
+    if (orders.length === 0) {
+      return { message: "Se existirem pedidos para este e-mail, voce recebera um link de acesso." };
+    }
+
+    const frontendBaseUrl = process.env["FRONTEND_URL"] ?? "https://primeirafila.com";
+
+    for (const order of orders) {
+      try {
+        const tenantBaseUrl = order.tenant?.customDomain
+          ? `https://${order.tenant.customDomain}`
+          : order.tenant?.subdomain
+            ? `https://${order.tenant.subdomain}.${new URL(frontendBaseUrl).host}`
+            : frontendBaseUrl;
+
+        const orderAccessUrl = this.magicLinkTokenService.buildOrderAccessUrl(
+          tenantBaseUrl,
+          order.id,
+          normalizedEmail
+        );
+
+        await this.emailService.sendOrderAccessLink({
+          tenantId: order.tenantId,
+          orderId: order.id,
+          buyerName: order.buyerName,
+          buyerEmail: normalizedEmail,
+          sessionName: order.session.name,
+          orderAccessUrl
+        });
+      } catch {
+        // Erro de e-mail nunca bloqueia o fluxo
+      }
+    }
+
+    return { message: "Se existirem pedidos para este e-mail, voce recebera um link de acesso." };
   }
 
   async createRefund(tenantId: string, orderId: string, requestedBy: string, dto: CreateRefundDto) {
@@ -654,6 +800,13 @@ export class OrdersService {
         }
       }
 
+      const frontendBaseUrl = process.env["FRONTEND_URL"] ?? "https://primeirafila.com";
+      const orderAccessUrl = this.magicLinkTokenService.buildOrderAccessUrl(
+        frontendBaseUrl,
+        order.id,
+        order.buyerEmail
+      );
+
       await this.emailService.sendOrderConfirmation({
         tenantId: order.tenantId,
         orderId: order.id,
@@ -664,6 +817,7 @@ export class OrdersService {
         serviceFeeCents: order.serviceFeeCents,
         totalAmountCents: order.totalAmountCents,
         currencyCode: order.currencyCode,
+        orderAccessUrl,
         tickets: tickets.map((t) => ({
           qrCode: t.qrCode,
           sessionName: t.session.name,

@@ -671,6 +671,38 @@ describe("EventsService", () => {
         })
       );
     });
+
+    it("deve filtrar por tenantId quando fornecido", async () => {
+      vi.mocked(prisma.event.findMany).mockResolvedValue([]);
+
+      await service.listPublicEvents(20, "tenant-abc");
+
+      expect(prisma.event.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: "tenant-abc"
+          })
+        })
+      );
+    });
+
+    it("nao deve filtrar por tenantId quando nao fornecido", async () => {
+      vi.mocked(prisma.event.findMany).mockResolvedValue([]);
+
+      await service.listPublicEvents(20);
+
+      const callArgs = vi.mocked(prisma.event.findMany).mock.calls[0][0];
+      expect(callArgs?.where).not.toHaveProperty("tenantId");
+    });
+
+    it("nao deve filtrar por tenantId quando undefined", async () => {
+      vi.mocked(prisma.event.findMany).mockResolvedValue([]);
+
+      await service.listPublicEvents(20, undefined);
+
+      const callArgs = vi.mocked(prisma.event.findMany).mock.calls[0][0];
+      expect(callArgs?.where).not.toHaveProperty("tenantId");
+    });
   });
 
   describe("getPublicEvent", () => {
@@ -692,6 +724,40 @@ describe("EventsService", () => {
       await expect(
         service.getPublicEvent("event-inexistente")
       ).rejects.toThrow("Evento nao encontrado ou indisponivel para publicacao.");
+    });
+
+    it("deve filtrar por tenantId quando fornecido", async () => {
+      const event = buildMockEvent({ status: EventStatus.PUBLISHED });
+      vi.mocked(prisma.event.findFirst).mockResolvedValue(event as never);
+
+      await service.getPublicEvent("event-001", "tenant-abc");
+
+      expect(prisma.event.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: "event-001",
+            tenantId: "tenant-abc"
+          })
+        })
+      );
+    });
+
+    it("nao deve filtrar por tenantId quando nao fornecido", async () => {
+      const event = buildMockEvent({ status: EventStatus.PUBLISHED });
+      vi.mocked(prisma.event.findFirst).mockResolvedValue(event as never);
+
+      await service.getPublicEvent("event-001");
+
+      const callArgs = vi.mocked(prisma.event.findFirst).mock.calls[0][0];
+      expect(callArgs?.where).not.toHaveProperty("tenantId");
+    });
+
+    it("deve retornar 404 quando evento pertence a outro tenant", async () => {
+      vi.mocked(prisma.event.findFirst).mockResolvedValue(null);
+
+      await expect(
+        service.getPublicEvent("event-001", "tenant-outro")
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

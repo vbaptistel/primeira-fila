@@ -404,11 +404,12 @@ export class EventsService {
     });
   }
 
-  async listPublicEvents(limit = 20) {
+  async listPublicEvents(limit = 20, tenantId?: string) {
     const safeLimit = this.normalizeLimit(limit);
 
     return this.prisma.event.findMany({
       where: {
+        ...(tenantId ? { tenantId } : {}),
         status: {
           not: EventStatus.ARCHIVED
         },
@@ -449,10 +450,11 @@ export class EventsService {
     });
   }
 
-  async getPublicEvent(eventId: string) {
+  async getPublicEvent(eventId: string, tenantId?: string) {
     const event = await this.prisma.event.findFirst({
       where: {
         id: eventId,
+        ...(tenantId ? { tenantId } : {}),
         status: {
           not: EventStatus.ARCHIVED
         },

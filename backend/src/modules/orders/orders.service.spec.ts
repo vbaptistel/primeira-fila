@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   GoneException,
   NotFoundException
 } from "@nestjs/common";
@@ -11,6 +12,7 @@ import { CommercialPoliciesService } from "../commercial-policies/commercial-pol
 import { PaymentGatewayService } from "./payment-gateway.service";
 import { AuditService } from "../../common/audit/audit.service";
 import { EmailService } from "../../common/email/email.service";
+import { MagicLinkTokenService } from "../../common/magic-link/magic-link-token.service";
 import {
   EventStatus,
   OrderStatus,
@@ -158,13 +160,17 @@ describe("OrdersService", () => {
   let auditService: AuditService;
   let emailService: EmailService;
   let commercialPoliciesService: CommercialPoliciesService;
+  let magicLinkTokenService: MagicLinkTokenService;
 
   beforeEach(() => {
     txClient = buildMockTxClient();
     prisma = buildMockPrisma(txClient);
     gateway = { charge: vi.fn() } as unknown as PaymentGatewayService;
     auditService = { log: vi.fn().mockResolvedValue(undefined) } as unknown as AuditService;
-    emailService = { sendOrderConfirmation: vi.fn().mockResolvedValue(undefined) } as unknown as EmailService;
+    emailService = {
+      sendOrderConfirmation: vi.fn().mockResolvedValue(undefined),
+      sendOrderAccessLink: vi.fn().mockResolvedValue(undefined)
+    } as unknown as EmailService;
     commercialPoliciesService = {
       getActivePolicy: vi.fn().mockResolvedValue({
         serviceFeePercentBps: 1000,
@@ -172,7 +178,12 @@ describe("OrdersService", () => {
         version: "platform_default_v1"
       })
     } as unknown as CommercialPoliciesService;
-    service = new OrdersService(prisma, commercialPoliciesService, gateway, auditService, emailService);
+    magicLinkTokenService = {
+      generateToken: vi.fn().mockReturnValue("valid-token-hex"),
+      validateToken: vi.fn().mockReturnValue(true),
+      buildOrderAccessUrl: vi.fn().mockReturnValue("https://tenant.com/pedidos/order-001?token=abc&email=maria%40email.com")
+    } as unknown as MagicLinkTokenService;
+    service = new OrdersService(prisma, commercialPoliciesService, gateway, auditService, emailService, magicLinkTokenService);
   });
 
   // ─── createOrder ────────────────────────────────────────────────
@@ -649,6 +660,117 @@ describe("OrdersService", () => {
       await expect(
         service.getOrderTickets("order-inexistente")
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ─── getOrderByToken ────────────────────────────────────────────
+
+  describe("getOrderByToken", () => {
+    it("deve retornar pedido quando token e email validos", async () => {
+      const order = {
+        ...buildMockOrder(),
+        session: { id: "session-001", name: "Sessao Tarde", startsAt: new Date(), endsAt: new Date() },
+        tickets: [],
+        createdAt: new Date()
+      };
+
+      (prisma.order as unknown as { findUnique: ReturnType<typeof vi.fn> }).findUnique
+        .mockResolvedValue(order);
+
+      const result = await service.getOrderByToken("order-001", "valid-token", "maria@email.com");
+
+      expect(result).toHaveProperty("id", "order-001");
+      expect(result).toHaveProperty("buyerName", "Maria Silva");
+      expect(magicLinkTokenService.validateToken).toHaveBeenCalledWith(
+        "order-001",
+        "maria@email.com",
+        "valid-token"
+      );
+    });
+
+    it("deve lancar ForbiddenException quando token e email ausentes", async () => {
+      await expect(
+        service.getOrderByToken("order-001", "", "")
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it("deve lancar ForbiddenException quando token invalido", async () => {
+      vi.mocked(magicLinkTokenService.validateToken).mockReturnValue(false);
+
+      await expect(
+        service.getOrderByToken("order-001", "token-invalido", "maria@email.com")
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it("deve lancar NotFoundException quando pedido nao encontrado", async () => {
+      (prisma.order as unknown as { findUnique: ReturnType<typeof vi.fn> }).findUnique
+        .mockResolvedValue(null);
+
+      await expect(
+        service.getOrderByToken("order-inexistente", "valid-token", "maria@email.com")
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("deve lancar NotFoundException quando email nao corresponde ao buyer", async () => {
+      const order = {
+        ...buildMockOrder(),
+        session: { id: "session-001", name: "Sessao Tarde", startsAt: new Date(), endsAt: new Date() },
+        tickets: [],
+        createdAt: new Date()
+      };
+
+      (prisma.order as unknown as { findUnique: ReturnType<typeof vi.fn> }).findUnique
+        .mockResolvedValue(order);
+
+      await expect(
+        service.getOrderByToken("order-001", "valid-token", "outro@email.com")
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ─── requestOrderAccess ────────────────────────────────────────
+
+  describe("requestOrderAccess", () => {
+    it("deve retornar mensagem generica quando nenhum pedido encontrado", async () => {
+      (prisma.order as unknown as { findMany?: ReturnType<typeof vi.fn> }).findMany =
+        vi.fn().mockResolvedValue([]);
+
+      const result = await service.requestOrderAccess("inexistente@email.com");
+
+      expect(result).toHaveProperty("message");
+      expect(result.message).toContain("Se existirem pedidos");
+    });
+
+    it("deve enviar email de acesso quando pedidos encontrados", async () => {
+      const orders = [{
+        ...buildMockOrder(),
+        session: { name: "Sessao Tarde" },
+        tenant: { subdomain: "acme", customDomain: null }
+      }];
+
+      (prisma.order as unknown as { findMany?: ReturnType<typeof vi.fn> }).findMany =
+        vi.fn().mockResolvedValue(orders);
+
+      const result = await service.requestOrderAccess("maria@email.com");
+
+      expect(result).toHaveProperty("message");
+      expect(emailService.sendOrderAccessLink).toHaveBeenCalled();
+    });
+
+    it("nao deve falhar quando envio de email falha", async () => {
+      const orders = [{
+        ...buildMockOrder(),
+        session: { name: "Sessao Tarde" },
+        tenant: { subdomain: "acme", customDomain: null }
+      }];
+
+      (prisma.order as unknown as { findMany?: ReturnType<typeof vi.fn> }).findMany =
+        vi.fn().mockResolvedValue(orders);
+      vi.mocked(emailService.sendOrderAccessLink).mockRejectedValue(new Error("Email failed"));
+
+      const result = await service.requestOrderAccess("maria@email.com");
+
+      expect(result).toHaveProperty("message");
     });
   });
 

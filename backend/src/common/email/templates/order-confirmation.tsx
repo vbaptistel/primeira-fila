@@ -40,8 +40,10 @@ type OrderConfirmationProps = {
   serviceFeeCents: number;
   totalAmountCents: number;
   currencyCode: string;
+  orderAccessUrl?: string;
   tickets: TicketInfo[];
   branding?: TenantBranding;
+  isAccessLink?: boolean;
 };
 
 function formatCurrency(cents: number, currencyCode: string): string {
@@ -63,8 +65,10 @@ export function OrderConfirmationEmail(props: OrderConfirmationProps) {
     serviceFeeCents = 0,
     totalAmountCents = 0,
     currencyCode = "BRL",
+    orderAccessUrl,
     tickets = [],
-    branding
+    branding,
+    isAccessLink = false
   } = props;
 
   const brandColor = branding?.primaryColor ?? "#1a1a1a";
@@ -89,76 +93,107 @@ export function OrderConfirmationEmail(props: OrderConfirmationProps) {
               />
             </Section>
           )}
-          <Heading style={brandHeadingStyle}>Compra confirmada!</Heading>
+          <Heading style={brandHeadingStyle}>
+            {isAccessLink ? "Acesso ao seu pedido" : "Compra confirmada!"}
+          </Heading>
           <Text style={textStyle}>Ola, {buyerName}!</Text>
-          <Text style={textStyle}>
-            Sua compra foi confirmada com sucesso. Abaixo estao os detalhes do seu pedido e os
-            ingressos.
-          </Text>
+          {isAccessLink ? (
+            <Text style={textStyle}>
+              Voce solicitou acesso ao seu pedido. Clique no botao abaixo para visualizar seus
+              ingressos e detalhes da compra.
+            </Text>
+          ) : (
+            <Text style={textStyle}>
+              Sua compra foi confirmada com sucesso. Abaixo estao os detalhes do seu pedido e os
+              ingressos.
+            </Text>
+          )}
 
-          <Section style={sectionStyle}>
-            <Heading as="h2" style={subheadingStyle}>
-              Resumo do pedido
-            </Heading>
-            <Text style={detailStyle}>Pedido: {orderId}</Text>
-            <Text style={detailStyle}>Sessao: {sessionName}</Text>
-            <Hr style={hrStyle} />
-            <Row>
-              <Column>
-                <Text style={detailStyle}>Subtotal ingressos</Text>
-              </Column>
-              <Column align="right">
-                <Text style={detailStyle}>
-                  {formatCurrency(ticketSubtotalCents, currencyCode)}
-                </Text>
-              </Column>
-            </Row>
-            <Row>
-              <Column>
-                <Text style={detailStyle}>Taxa de servico</Text>
-              </Column>
-              <Column align="right">
-                <Text style={detailStyle}>{formatCurrency(serviceFeeCents, currencyCode)}</Text>
-              </Column>
-            </Row>
-            <Hr style={hrStyle} />
-            <Row>
-              <Column>
-                <Text style={totalStyle}>Total</Text>
-              </Column>
-              <Column align="right">
-                <Text style={totalStyle}>{formatCurrency(totalAmountCents, currencyCode)}</Text>
-              </Column>
-            </Row>
-          </Section>
+          {!isAccessLink && (
+            <Section style={sectionStyle}>
+              <Heading as="h2" style={subheadingStyle}>
+                Resumo do pedido
+              </Heading>
+              <Text style={detailStyle}>Pedido: {orderId}</Text>
+              <Text style={detailStyle}>Sessao: {sessionName}</Text>
+              <Hr style={hrStyle} />
+              <Row>
+                <Column>
+                  <Text style={detailStyle}>Subtotal ingressos</Text>
+                </Column>
+                <Column align="right">
+                  <Text style={detailStyle}>
+                    {formatCurrency(ticketSubtotalCents, currencyCode)}
+                  </Text>
+                </Column>
+              </Row>
+              <Row>
+                <Column>
+                  <Text style={detailStyle}>Taxa de servico</Text>
+                </Column>
+                <Column align="right">
+                  <Text style={detailStyle}>{formatCurrency(serviceFeeCents, currencyCode)}</Text>
+                </Column>
+              </Row>
+              <Hr style={hrStyle} />
+              <Row>
+                <Column>
+                  <Text style={totalStyle}>Total</Text>
+                </Column>
+                <Column align="right">
+                  <Text style={totalStyle}>{formatCurrency(totalAmountCents, currencyCode)}</Text>
+                </Column>
+              </Row>
+            </Section>
+          )}
 
-          <Section style={sectionStyle}>
-            <Heading as="h2" style={subheadingStyle}>
-              Seus ingressos
-            </Heading>
-            {tickets.map((ticket) => (
-              <Section key={ticket.qrCode} style={ticketCardStyle}>
-                <Row>
-                  <Column style={ticketInfoColumnStyle}>
-                    <Text style={ticketSessionStyle}>{ticket.sessionName}</Text>
-                    <Text style={detailStyle}>
-                      Setor {ticket.seatSector} | Fileira {ticket.seatRow} | Assento{" "}
-                      {ticket.seatNumber}
-                    </Text>
-                  </Column>
-                  <Column style={qrColumnStyle}>
-                    <Img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(ticket.qrCode)}`}
-                      width={90}
-                      height={90}
-                      alt={`QR Code do ingresso - ${ticket.seatSector} ${ticket.seatRow}${ticket.seatNumber}`}
-                      style={qrImageStyle}
-                    />
-                  </Column>
-                </Row>
-              </Section>
-            ))}
-          </Section>
+          {!isAccessLink && tickets.length > 0 && (
+            <Section style={sectionStyle}>
+              <Heading as="h2" style={subheadingStyle}>
+                Seus ingressos
+              </Heading>
+              {tickets.map((ticket) => (
+                <Section key={ticket.qrCode} style={ticketCardStyle}>
+                  <Row>
+                    <Column style={ticketInfoColumnStyle}>
+                      <Text style={ticketSessionStyle}>{ticket.sessionName}</Text>
+                      <Text style={detailStyle}>
+                        Setor {ticket.seatSector} | Fileira {ticket.seatRow} | Assento{" "}
+                        {ticket.seatNumber}
+                      </Text>
+                    </Column>
+                    <Column style={qrColumnStyle}>
+                      <Img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(ticket.qrCode)}`}
+                        width={90}
+                        height={90}
+                        alt={`QR Code do ingresso - ${ticket.seatSector} ${ticket.seatRow}${ticket.seatNumber}`}
+                        style={qrImageStyle}
+                      />
+                    </Column>
+                  </Row>
+                </Section>
+              ))}
+            </Section>
+          )}
+
+          {isAccessLink && (
+            <Section style={sectionStyle}>
+              <Text style={detailStyle}>Pedido: {orderId}</Text>
+              <Text style={detailStyle}>Sessao: {sessionName}</Text>
+            </Section>
+          )}
+
+          {orderAccessUrl && (
+            <Section style={accessLinkSectionStyle}>
+              <Link href={orderAccessUrl} style={accessButtonStyle}>
+                {isAccessLink ? "Ver meu pedido" : "Acessar meus ingressos online"}
+              </Link>
+              <Text style={accessHintStyle}>
+                Este link e pessoal e permite acessar seus ingressos a qualquer momento.
+              </Text>
+            </Section>
+          )}
 
           <Hr style={hrStyle} />
           {branding?.footerText && (
@@ -281,6 +316,29 @@ const qrColumnStyle: React.CSSProperties = {
 const qrImageStyle: React.CSSProperties = {
   borderRadius: "4px",
   border: "1px solid #e5e7eb"
+};
+
+const accessLinkSectionStyle: React.CSSProperties = {
+  margin: "24px 0",
+  textAlign: "center" as const
+};
+
+const accessButtonStyle: React.CSSProperties = {
+  display: "inline-block",
+  backgroundColor: "#1a1a1a",
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: "bold",
+  padding: "14px 32px",
+  borderRadius: "6px",
+  textDecoration: "none"
+};
+
+const accessHintStyle: React.CSSProperties = {
+  color: "#9ca3af",
+  fontSize: "12px",
+  margin: "12px 0 0",
+  textAlign: "center" as const
 };
 
 const hrStyle: React.CSSProperties = {

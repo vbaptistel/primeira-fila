@@ -16,6 +16,7 @@ type OrderEmailData = {
   serviceFeeCents: number;
   totalAmountCents: number;
   currencyCode: string;
+  orderAccessUrl?: string;
   tickets: {
     qrCode: string;
     sessionName: string;
@@ -23,6 +24,15 @@ type OrderEmailData = {
     seatRow: string;
     seatNumber: number;
   }[];
+};
+
+type OrderAccessLinkData = {
+  tenantId: string;
+  orderId: string;
+  buyerName: string;
+  buyerEmail: string;
+  sessionName: string;
+  orderAccessUrl: string;
 };
 
 @Injectable()
@@ -63,6 +73,7 @@ export class EmailService {
           serviceFeeCents: data.serviceFeeCents,
           totalAmountCents: data.totalAmountCents,
           currencyCode: data.currencyCode,
+          orderAccessUrl: data.orderAccessUrl,
           tickets: data.tickets,
           branding
         })
@@ -105,6 +116,80 @@ export class EmailService {
 
       this.logger.error(
         `Falha ao enviar e-mail de confirmacao para ${data.buyerEmail} (orderId=${data.orderId}): ${errorMessage}`
+      );
+    }
+  }
+
+  async sendOrderAccessLink(data: OrderAccessLinkData): Promise<void> {
+    const subject = `Acesso ao seu pedido - ${data.sessionName}`;
+
+    const emailLog = await this.prisma.emailLog.create({
+      data: {
+        tenantId: data.tenantId,
+        orderId: data.orderId,
+        to: data.buyerEmail,
+        subject,
+        templateName: "order-access-link",
+        status: EmailStatus.PENDING
+      }
+    });
+
+    try {
+      const branding = await this.loadTenantBranding(data.tenantId);
+
+      const html = await render(
+        OrderConfirmationEmail({
+          buyerName: data.buyerName,
+          orderId: data.orderId,
+          sessionName: data.sessionName,
+          ticketSubtotalCents: 0,
+          serviceFeeCents: 0,
+          totalAmountCents: 0,
+          currencyCode: "BRL",
+          orderAccessUrl: data.orderAccessUrl,
+          tickets: [],
+          branding,
+          isAccessLink: true
+        })
+      );
+
+      const result = await this.resend.emails.send({
+        from: this.emailFrom,
+        to: data.buyerEmail,
+        subject,
+        html
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      await this.prisma.emailLog.update({
+        where: { id: emailLog.id },
+        data: {
+          status: EmailStatus.SENT,
+          resendMessageId: result.data?.id,
+          sentAt: new Date()
+        }
+      });
+
+      this.logger.log(
+        `E-mail de acesso enviado para ${data.buyerEmail} (orderId=${data.orderId}, resendId=${result.data?.id})`
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro desconhecido ao enviar e-mail";
+
+      await this.prisma.emailLog.update({
+        where: { id: emailLog.id },
+        data: {
+          status: EmailStatus.FAILED,
+          errorMessage: errorMessage.slice(0, 500)
+        }
+      });
+
+      this.logger.error(
+        `Falha ao enviar e-mail de acesso para ${data.buyerEmail} (orderId=${data.orderId}): ${errorMessage}`
       );
     }
   }

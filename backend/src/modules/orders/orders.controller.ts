@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { FastifyRequest } from "fastify";
 import { AuthPrincipal } from "../../common/auth/auth.types";
@@ -7,6 +7,7 @@ import { TenantRoles } from "../../common/auth/roles.decorator";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { CreateOrderPaymentDto } from "./dto/create-order-payment.dto";
 import { CreateRefundDto } from "./dto/create-refund.dto";
+import { RequestOrderAccessDto } from "./dto/request-order-access.dto";
 import { WebhookPaymentDto } from "./dto/webhook-payment.dto";
 import { OrdersService } from "./orders.service";
 
@@ -32,9 +33,28 @@ export class OrdersController {
     return this.ordersService.createOrderPayment(orderId, idempotencyKey, dto);
   }
 
+  @Get(":orderId")
+  getOrderByToken(
+    @Param("orderId", ParseUUIDPipe) orderId: string,
+    @Query("token") token: string,
+    @Query("email") email: string
+  ) {
+    return this.ordersService.getOrderByToken(orderId, token, email);
+  }
+
   @Get(":orderId/tickets")
-  getOrderTickets(@Param("orderId", ParseUUIDPipe) orderId: string) {
-    return this.ordersService.getOrderTickets(orderId);
+  getOrderTickets(
+    @Param("orderId", ParseUUIDPipe) orderId: string,
+    @Query("token") token?: string,
+    @Query("email") email?: string
+  ) {
+    return this.ordersService.getOrderTickets(orderId, token, email);
+  }
+
+  @Post("request-access")
+  @HttpCode(HttpStatus.OK)
+  requestOrderAccess(@Body() dto: RequestOrderAccessDto) {
+    return this.ordersService.requestOrderAccess(dto.email);
   }
 }
 
