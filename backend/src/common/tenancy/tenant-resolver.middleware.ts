@@ -2,8 +2,7 @@ import { Injectable, Logger, NestMiddleware } from "@nestjs/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Tenant } from "../../generated/prisma/client";
 import { TenancyBrandingService } from "../../modules/tenancy-branding/tenancy-branding.service";
-
-const DEFAULT_BASE_DOMAIN = "primeira-fila.com";
+import { parseHostForTenant } from "./tenant-resolver.utils";
 
 export type TenantAwareRequest = FastifyRequest & {
   resolvedTenant?: Tenant;
@@ -12,12 +11,12 @@ export type TenantAwareRequest = FastifyRequest & {
 /**
  * Middleware que resolve o tenant a partir do header Host.
  *
- * Logica de resolucao:
- * 1. Se o host e um subdominio do dominio base (e.g. acme.primeira-fila.com),
+ * Logica de resolucao (via tenant-resolver.utils):
+ * 1. Se o host e um subdominio de um dominio base (e.g. acme.primeira-fila.com, acme.primeirafila.app),
  *    extrai o subdomain e busca por subdomain.
- * 2. Se o host nao pertence ao dominio base, trata como dominio customizado
+ * 2. Se o host nao pertence a nenhum dominio base, trata como dominio customizado
  *    e busca por customDomain (somente VERIFIED).
- * 3. Se o host e o dominio base puro ou nao ha host, nao resolve
+ * 3. Se o host e dominio base puro, www ou subdominio multi-nivel, nao resolve
  *    (rotas admin usam tenantId do JWT).
  *
  * O middleware apenas popula request.resolvedTenant e nunca bloqueia.
@@ -26,11 +25,8 @@ export type TenantAwareRequest = FastifyRequest & {
 @Injectable()
 export class TenantResolverMiddleware implements NestMiddleware {
   private readonly logger = new Logger(TenantResolverMiddleware.name);
-  private readonly baseDomain: string;
 
-  constructor(private readonly tenancyBrandingService: TenancyBrandingService) {
-    this.baseDomain = (process.env.PLATFORM_BASE_DOMAIN ?? DEFAULT_BASE_DOMAIN).toLowerCase();
-  }
+  constructor(private readonly tenancyBrandingService: TenancyBrandingService) {}
 
   async use(
     request: TenantAwareRequest,
@@ -57,50 +53,19 @@ export class TenantResolverMiddleware implements NestMiddleware {
   }
 
   private async resolve(host: string): Promise<Tenant | null> {
-    // Verifica se o host pertence ao dominio base
-    if (this.belongsToBaseDomain(host)) {
-      const subdomain = this.extractSubdomain(host);
-      if (subdomain) {
-        return this.tenancyBrandingService.resolveBySubdomain(subdomain);
-      }
-      // Dominio base puro, www, ou subdominio multi-nivel: nao resolve
-      return null;
+    const parsed = parseHostForTenant(host);
+    if (!parsed) return null;
+    if (parsed.type === "subdomain") {
+      return this.tenancyBrandingService.resolveBySubdomain(parsed.subdomain);
     }
-
-    // Host externo ao dominio base: tenta como dominio customizado
-    return this.tenancyBrandingService.resolveByDomain(host);
+    return this.tenancyBrandingService.resolveByDomain(parsed.domain);
   }
 
   private extractHost(request: FastifyRequest): string | null {
-    // X-Forwarded-Host e usado por reverse proxies (Vercel)
     const forwarded = request.headers["x-forwarded-host"];
     const forwardedHost = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-
     const raw = forwardedHost ?? request.headers.host;
     if (!raw) return null;
-
-    // Remove porta se presente
     return raw.split(":")[0].toLowerCase().trim();
-  }
-
-  private extractSubdomain(host: string): string | null {
-    const suffix = `.${this.baseDomain}`;
-
-    if (!host.endsWith(suffix)) {
-      return null;
-    }
-
-    const subdomain = host.slice(0, -suffix.length);
-
-    // Ignora subdominios vazios ou com niveis extras (e.g. a.b.primeira-fila.com)
-    if (!subdomain || subdomain.includes(".")) {
-      return null;
-    }
-
-    return subdomain;
-  }
-
-  private belongsToBaseDomain(host: string): boolean {
-    return host === this.baseDomain || host.endsWith(`.${this.baseDomain}`);
   }
 }

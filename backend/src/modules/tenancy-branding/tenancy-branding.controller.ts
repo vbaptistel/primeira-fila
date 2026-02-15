@@ -16,6 +16,7 @@ import {
 import { ApiTags } from "@nestjs/swagger";
 import { TenantRbacGuard } from "../../common/auth/tenant-rbac.guard";
 import { TenantRoles } from "../../common/auth/roles.decorator";
+import { parseHostForTenant } from "../../common/tenancy/tenant-resolver.utils";
 import { TenancyBrandingService } from "./tenancy-branding.service";
 import { CustomDomainService } from "./custom-domain.service";
 import { CreateTenantDto } from "./dto/create-tenant.dto";
@@ -109,11 +110,21 @@ export class TenancyBrandingController {
     }
 
     if (domain) {
-      const tenant = await this.tenancyBrandingService.resolveByDomain(domain);
-      if (!tenant) {
-        return { found: false, tenant: null };
+      const parsed = parseHostForTenant(domain);
+      if (parsed?.type === "subdomain") {
+        const tenant = await this.tenancyBrandingService.resolveBySubdomain(parsed.subdomain);
+        if (!tenant) {
+          return { found: false, tenant: null };
+        }
+        return { found: true, tenant: this.tenancyBrandingService.getPublicBranding(tenant) };
       }
-      return { found: true, tenant: this.tenancyBrandingService.getPublicBranding(tenant) };
+      if (parsed?.type === "custom") {
+        const tenant = await this.tenancyBrandingService.resolveByDomain(parsed.domain);
+        if (!tenant) {
+          return { found: false, tenant: null };
+        }
+        return { found: true, tenant: this.tenancyBrandingService.getPublicBranding(tenant) };
+      }
     }
 
     return { found: false, tenant: null };

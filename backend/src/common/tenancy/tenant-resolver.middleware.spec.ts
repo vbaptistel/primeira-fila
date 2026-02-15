@@ -34,7 +34,7 @@ describe("TenantResolverMiddleware", () => {
   let tenancyBranding: ReturnType<typeof createMockTenancyBrandingService>;
 
   beforeEach(() => {
-    process.env.PLATFORM_BASE_DOMAIN = "primeira-fila.com";
+    delete process.env.PLATFORM_BASE_DOMAINS;
     tenancyBranding = createMockTenancyBrandingService();
     middleware = new TenantResolverMiddleware(
       tenancyBranding as unknown as TenancyBrandingService
@@ -79,6 +79,18 @@ describe("TenantResolverMiddleware", () => {
 
       expect(tenancyBranding.resolveBySubdomain).toHaveBeenCalledWith("acme");
     });
+
+    it("deve resolver tenant por subdominio em primeirafila.app", async () => {
+      vi.mocked(tenancyBranding.resolveBySubdomain).mockResolvedValue(TENANT_FIXTURE as never);
+
+      const request = createMockRequest("acme.primeirafila.app");
+      const next = vi.fn();
+
+      await middleware.use(request, {} as FastifyReply, next);
+
+      expect(tenancyBranding.resolveBySubdomain).toHaveBeenCalledWith("acme");
+      expect(request.resolvedTenant).toEqual(TENANT_FIXTURE);
+    });
   });
 
   // --- Dominio base (sem resolucao) ---
@@ -103,6 +115,17 @@ describe("TenantResolverMiddleware", () => {
       await middleware.use(request, {} as FastifyReply, next);
 
       expect(request.resolvedTenant).toBeUndefined();
+    });
+
+    it("nao deve resolver para dominio base primeirafila.app puro", async () => {
+      const request = createMockRequest("primeirafila.app");
+      const next = vi.fn();
+
+      await middleware.use(request, {} as FastifyReply, next);
+
+      expect(request.resolvedTenant).toBeUndefined();
+      expect(tenancyBranding.resolveBySubdomain).not.toHaveBeenCalled();
+      expect(tenancyBranding.resolveByDomain).not.toHaveBeenCalled();
     });
   });
 
