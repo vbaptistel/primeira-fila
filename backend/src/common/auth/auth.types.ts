@@ -1,4 +1,5 @@
-import { JWTPayload } from "jose";
+/** Claims do JWT (Supabase getClaims ou decode inseguro). */
+export type JwtClaims = Record<string, unknown> & { sub?: string };
 
 export const APP_ROLES = ["platform_admin", "organizer_admin", "operator", "buyer"] as const;
 
@@ -8,5 +9,5 @@ export type AuthPrincipal = {
   userId: string;
   tenantId?: string;
   roles: AppRole[];
-  claims: JWTPayload;
+  claims: JwtClaims;
 };

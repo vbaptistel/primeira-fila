@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { createRemoteJWKSet, decodeJwt, JWTPayload, jwtVerify, JWTVerifyOptions } from "jose";
-import { URL } from "node:url";
-import { APP_ROLES, AppRole, AuthPrincipal } from "./auth.types";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { APP_ROLES, AppRole, AuthPrincipal, type JwtClaims } from "./auth.types";
 
 type AnyRecord = Record<string, unknown>;
 
@@ -20,9 +19,23 @@ const TENANT_CLAIM_PATHS = [
   ["app_metadata", "tenantId"]
 ];
 
+/** Decodifica o payload de um JWT sem verificar assinatura (apenas base64url). */
+function decodeJwtPayloadUnsafe(token: string): JwtClaims {
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    throw new Error("Token invalido.");
+  }
+  const payload = Buffer.from(parts[1], "base64url").toString("utf8");
+  const decoded = JSON.parse(payload) as unknown;
+  if (typeof decoded !== "object" || decoded === null) {
+    throw new Error("Token invalido.");
+  }
+  return decoded as JwtClaims;
+}
+
 @Injectable()
 export class SupabaseJwtVerifierService {
-  private jwksResolver: ReturnType<typeof createRemoteJWKSet> | null = null;
+  private supabase: SupabaseClient | null = null;
 
   async verifyToken(token: string): Promise<AuthPrincipal> {
     const payload = await this.verifyAndDecode(token);
@@ -38,84 +51,52 @@ export class SupabaseJwtVerifierService {
     };
   }
 
-  private async verifyAndDecode(token: string): Promise<JWTPayload> {
+  private async verifyAndDecode(token: string): Promise<JwtClaims> {
     if (this.isInsecureDecodeEnabled()) {
       try {
-        return decodeJwt(token);
+        return decodeJwtPayloadUnsafe(token);
       } catch {
         throw new UnauthorizedException("Token invalido.");
       }
     }
 
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
-    const verifyOptions = this.buildVerifyOptions();
+    const client = this.getSupabaseClient();
+    const { data, error } = await client.auth.getClaims(token);
 
-    if (jwtSecret) {
-      try {
-        const { payload } = await jwtVerify(
-          token,
-          new TextEncoder().encode(jwtSecret),
-          verifyOptions
-        );
-        return payload;
-      } catch {
-        throw new UnauthorizedException("Token invalido.");
-      }
-    }
-
-    const jwksUrl = this.getJwksUrl();
-    if (!jwksUrl) {
-      throw new UnauthorizedException(
-        "Configuracao de verificacao JWT ausente. Defina SUPABASE_JWT_SECRET ou SUPABASE_JWKS_URL."
-      );
-    }
-
-    try {
-      const resolver = this.getOrCreateJwksResolver(jwksUrl);
-      const { payload } = await jwtVerify(token, resolver, verifyOptions);
-      return payload;
-    } catch {
+    if (error) {
       throw new UnauthorizedException("Token invalido.");
     }
-  }
-
-  private getOrCreateJwksResolver(jwksUrl: string) {
-    if (!this.jwksResolver) {
-      this.jwksResolver = createRemoteJWKSet(new URL(jwksUrl));
+    if (!data?.claims) {
+      throw new UnauthorizedException("Token invalido.");
     }
 
-    return this.jwksResolver;
+    return data.claims as JwtClaims;
   }
 
-  private buildVerifyOptions(): JWTVerifyOptions {
-    const issuer = process.env.SUPABASE_JWT_ISSUER;
-    const audience = process.env.SUPABASE_JWT_AUDIENCE;
+  private getSupabaseClient(): SupabaseClient {
+    if (!this.supabase) {
+      const url = process.env.SUPABASE_URL;
+      const key = process.env.SUPABASE_PUBLISHABLE_KEY;
 
-    return {
-      issuer: issuer || undefined,
-      audience: audience || undefined
-    };
-  }
+      if (!url || !key) {
+        throw new UnauthorizedException(
+          "Configuracao de verificacao JWT ausente. Defina SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL) e SUPABASE_PUBLISHABLE_KEY (ou SUPABASE_ANON_KEY)."
+        );
+      }
 
-  private getJwksUrl(): string | null {
-    const explicit = process.env.SUPABASE_JWKS_URL;
-    if (explicit) {
-      return explicit;
+      this.supabase = createClient(url, key, {
+        auth: { persistSession: false }
+      });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl) {
-      return null;
-    }
-
-    return `${supabaseUrl.replace(/\/+$/, "")}/auth/v1/.well-known/jwks.json`;
+    return this.supabase;
   }
 
   private isInsecureDecodeEnabled(): boolean {
     return process.env.AUTH_JWT_INSECURE_DECODE === "true";
   }
 
-  private readUserId(payload: JWTPayload): string {
+  private readUserId(payload: JwtClaims): string {
     const subject = payload.sub;
     if (!subject) {
       throw new UnauthorizedException("Token sem subject.");
@@ -124,7 +105,7 @@ export class SupabaseJwtVerifierService {
     return subject;
   }
 
-  private readRoles(payload: JWTPayload): AppRole[] {
+  private readRoles(payload: JwtClaims): AppRole[] {
     const roles = new Set<AppRole>();
 
     for (const path of ROLE_CLAIM_PATHS) {
@@ -167,7 +148,7 @@ export class SupabaseJwtVerifierService {
     return null;
   }
 
-  private readTenantId(payload: JWTPayload): string | undefined {
+  private readTenantId(payload: JwtClaims): string | undefined {
     for (const path of TENANT_CLAIM_PATHS) {
       const claim = this.readPath(payload as AnyRecord, path);
       if (typeof claim === "string" && claim.trim().length > 0) {

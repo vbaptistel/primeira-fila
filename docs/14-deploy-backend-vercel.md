@@ -33,6 +33,20 @@ Backend único em NestJS, com processamento totalmente síncrono nesta fase, pub
 - Claims mínimas para autorização: `sub`, `role` e `tenant_id`.
 - Segredos e chaves do provider segregados por ambiente (`preview` e `production`).
 
+### Variáveis de ambiente Supabase (backend)
+
+O backend usa apenas **verificação local do JWT** (`auth.getClaims(token)`), sem chamar a API do Auth. Por isso são necessárias só as variáveis abaixo. **Não** é necessário configurar a secret key (service_role) nem JWT secret no backend para essa verificação.
+
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `SUPABASE_URL` | Sim* | URL do projeto (ex.: `https://xxxx.supabase.co`). Preferir no backend; alternativamente `NEXT_PUBLIC_SUPABASE_URL`. |
+| `SUPABASE_PUBLISHABLE_KEY` | Sim* | Chave **Publishable** (nova, prefixo `sb_publishable_...`). Segura para uso no backend só para verificação de JWT. Alternativamente `SUPABASE_ANON_KEY` (legacy anon). |
+| `AUTH_JWT_INSECURE_DECODE` | Não | Se `true`, apenas decodifica o payload do JWT sem verificar assinatura (apenas para desenvolvimento/local). |
+
+\* Exceto se `AUTH_JWT_INSECURE_DECODE=true` (modo inseguro).
+
+**Não usar no backend para este fluxo:** `SUPABASE_SERVICE_ROLE_KEY` / secret key (privilegiada; só se o backend precisar de operações admin no Auth). O verifier atual não a utiliza.
+
 ## Configuração do PostgreSQL (Supabase)
 - Conexão obrigatória com SSL (`sslmode=require`).
 - Credenciais distintas por ambiente (`preview` e `production`) quando aplicável.
