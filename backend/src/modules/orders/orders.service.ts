@@ -6,19 +6,27 @@ import {
   NotFoundException
 } from "@nestjs/common";
 import {
+  AuditAction,
   EventStatus,
+  Order,
+  OrderItem,
   OrderStatus,
   PaymentStatus,
   Prisma,
+  RefundStatus,
   SessionHoldStatus,
   SessionSeatStatus,
-  SessionStatus
+  SessionStatus,
+  TicketStatus
 } from "../../generated/prisma/client";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { AuditService } from "../../common/audit/audit.service";
 import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CommercialPoliciesService } from "../commercial-policies/commercial-policies.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { CreateOrderPaymentDto } from "./dto/create-order-payment.dto";
+import { CreateRefundDto } from "./dto/create-refund.dto";
+import { WebhookPaymentDto } from "./dto/webhook-payment.dto";
 import { PaymentGatewayService } from "./payment-gateway.service";
 
 const IDEMPOTENCY_KEY_PATTERN =
@@ -29,7 +37,8 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly commercialPoliciesService: CommercialPoliciesService,
-    private readonly paymentGatewayService: PaymentGatewayService
+    private readonly paymentGatewayService: PaymentGatewayService,
+    private readonly auditService: AuditService
   ) {}
 
   async createOrder(idempotencyKeyHeader: string | undefined, dto: CreateOrderDto) {
@@ -277,37 +286,7 @@ export class OrdersService {
           });
 
           if (gatewayResult.status === PaymentStatus.APPROVED) {
-            await tx.order.update({
-              where: {
-                id: order.id
-              },
-              data: {
-                status: OrderStatus.PAID
-              }
-            });
-
-            await tx.sessionHold.updateMany({
-              where: {
-                id: order.holdId,
-                status: SessionHoldStatus.ACTIVE
-              },
-              data: {
-                status: SessionHoldStatus.CONSUMED
-              }
-            });
-
-            await tx.sessionSeat.updateMany({
-              where: {
-                id: {
-                  in: order.items.map((item) => item.seatId)
-                },
-                sessionId: order.sessionId,
-                status: SessionSeatStatus.HELD
-              },
-              data: {
-                status: SessionSeatStatus.SOLD
-              }
-            });
+            await this.approveOrder(tx, order);
           }
 
           return tx.payment.findUnique({
@@ -351,6 +330,297 @@ export class OrdersService {
 
       throw error;
     }
+  }
+
+  async processWebhook(dto: WebhookPaymentDto) {
+    const payment = await this.prisma.payment.findUnique({
+      where: {
+        providerPaymentId: dto.providerPaymentId
+      },
+      include: {
+        order: {
+          include: {
+            items: {
+              orderBy: {
+                createdAt: "asc"
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!payment) {
+      throw new NotFoundException("Pagamento nao encontrado para o providerPaymentId informado.");
+    }
+
+    if (payment.status === dto.status) {
+      return { processed: false, reason: "Status ja aplicado.", paymentId: payment.id };
+    }
+
+    if (payment.status === PaymentStatus.APPROVED || payment.status === PaymentStatus.REFUNDED) {
+      return { processed: false, reason: "Pagamento em estado terminal.", paymentId: payment.id };
+    }
+
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const freshPayment = await tx.payment.findUnique({
+            where: { id: payment.id },
+            include: {
+              order: {
+                include: {
+                  items: { orderBy: { createdAt: "asc" } }
+                }
+              }
+            }
+          });
+
+          if (!freshPayment) {
+            throw new NotFoundException("Pagamento nao encontrado.");
+          }
+
+          if (
+            freshPayment.status === dto.status ||
+            freshPayment.status === PaymentStatus.APPROVED ||
+            freshPayment.status === PaymentStatus.REFUNDED
+          ) {
+            return {
+              processed: false,
+              reason: "Pagamento ja processado.",
+              paymentId: freshPayment.id
+            };
+          }
+
+          await tx.payment.update({
+            where: { id: freshPayment.id },
+            data: {
+              status: dto.status,
+              providerPayload: dto.payload as Prisma.InputJsonValue ?? undefined,
+              approvedAt: dto.status === PaymentStatus.APPROVED ? new Date() : undefined,
+              deniedAt: dto.status === PaymentStatus.DENIED ? new Date() : undefined
+            }
+          });
+
+          if (
+            dto.status === PaymentStatus.APPROVED &&
+            freshPayment.order.status === OrderStatus.PENDING_PAYMENT
+          ) {
+            await this.approveOrder(tx, freshPayment.order);
+          }
+
+          return { processed: true, paymentId: freshPayment.id };
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable
+        }
+      );
+    } catch (error) {
+      if (this.isPrismaErrorCode(error, "P2034")) {
+        throw new ConflictException("Conflito de concorrencia ao processar webhook.");
+      }
+
+      throw error;
+    }
+  }
+
+  async getOrderTickets(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId }
+    });
+
+    if (!order) {
+      throw new NotFoundException("Pedido nao encontrado.");
+    }
+
+    const tickets = await this.prisma.ticket.findMany({
+      where: { orderId },
+      include: {
+        seat: {
+          select: {
+            id: true,
+            sectorCode: true,
+            rowLabel: true,
+            seatNumber: true
+          }
+        },
+        session: {
+          select: {
+            id: true,
+            name: true,
+            startsAt: true,
+            endsAt: true
+          }
+        }
+      },
+      orderBy: { createdAt: "asc" }
+    });
+
+    return tickets;
+  }
+
+  async createRefund(tenantId: string, orderId: string, requestedBy: string, dto: CreateRefundDto) {
+    try {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const order = await tx.order.findUnique({
+            where: { id: orderId },
+            include: {
+              items: { orderBy: { createdAt: "asc" } },
+              payments: {
+                where: { status: PaymentStatus.APPROVED },
+                orderBy: { createdAt: "desc" },
+                take: 1
+              }
+            }
+          });
+
+          if (!order) {
+            throw new NotFoundException("Pedido nao encontrado.");
+          }
+
+          if (order.tenantId !== tenantId) {
+            throw new NotFoundException("Pedido nao encontrado.");
+          }
+
+          if (order.status !== OrderStatus.PAID) {
+            throw new ConflictException("Somente pedidos pagos podem ser reembolsados.");
+          }
+
+          const approvedPayment = order.payments[0];
+          if (!approvedPayment) {
+            throw new ConflictException("Nenhum pagamento aprovado encontrado para reembolso.");
+          }
+
+          const refund = await tx.refund.create({
+            data: {
+              tenantId,
+              orderId: order.id,
+              paymentId: approvedPayment.id,
+              reasonCode: dto.reasonCode,
+              reasonDescription: dto.reasonDescription,
+              amountCents: approvedPayment.amountCents,
+              status: RefundStatus.APPROVED,
+              requestedBy,
+              processedAt: new Date()
+            }
+          });
+
+          await tx.payment.update({
+            where: { id: approvedPayment.id },
+            data: { status: PaymentStatus.REFUNDED }
+          });
+
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: OrderStatus.CANCELLED }
+          });
+
+          await tx.ticket.updateMany({
+            where: {
+              orderId: order.id,
+              status: TicketStatus.VALID
+            },
+            data: { status: TicketStatus.CANCELLED }
+          });
+
+          await tx.sessionSeat.updateMany({
+            where: {
+              id: { in: order.items.map((item) => item.seatId) },
+              sessionId: order.sessionId,
+              status: SessionSeatStatus.SOLD
+            },
+            data: { status: SessionSeatStatus.AVAILABLE }
+          });
+
+          await tx.sessionHold.updateMany({
+            where: {
+              id: order.holdId,
+              status: SessionHoldStatus.CONSUMED
+            },
+            data: { status: SessionHoldStatus.CANCELLED }
+          });
+
+          await this.auditService.log(
+            {
+              tenantId,
+              actorId: requestedBy,
+              action: AuditAction.REFUND_APPROVED,
+              resourceType: "refund",
+              resourceId: refund.id,
+              metadata: {
+                orderId: order.id,
+                paymentId: approvedPayment.id,
+                reasonCode: dto.reasonCode,
+                amountCents: approvedPayment.amountCents
+              }
+            },
+            tx
+          );
+
+          return refund;
+        },
+        {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable
+        }
+      );
+    } catch (error) {
+      if (this.isPrismaErrorCode(error, "P2034")) {
+        throw new ConflictException("Conflito de concorrencia ao processar reembolso.");
+      }
+
+      throw error;
+    }
+  }
+
+  private async approveOrder(
+    tx: Prisma.TransactionClient,
+    order: Order & { items: OrderItem[] }
+  ): Promise<void> {
+    await tx.order.update({
+      where: { id: order.id },
+      data: { status: OrderStatus.PAID }
+    });
+
+    await tx.sessionHold.updateMany({
+      where: {
+        id: order.holdId,
+        status: SessionHoldStatus.ACTIVE
+      },
+      data: { status: SessionHoldStatus.CONSUMED }
+    });
+
+    await tx.sessionSeat.updateMany({
+      where: {
+        id: { in: order.items.map((item) => item.seatId) },
+        sessionId: order.sessionId,
+        status: SessionSeatStatus.HELD
+      },
+      data: { status: SessionSeatStatus.SOLD }
+    });
+
+    await this.generateTickets(tx, order);
+  }
+
+  private async generateTickets(
+    tx: Prisma.TransactionClient,
+    order: Order & { items: OrderItem[] }
+  ): Promise<void> {
+    if (!order.items.length) {
+      return;
+    }
+
+    const ticketData = order.items.map((item) => ({
+      tenantId: order.tenantId,
+      orderId: order.id,
+      orderItemId: item.id,
+      sessionId: item.sessionId,
+      seatId: item.seatId,
+      qrCode: randomUUID(),
+      status: TicketStatus.VALID
+    }));
+
+    await tx.ticket.createMany({ data: ticketData });
   }
 
   private async findOrderByIdempotencyKey(idempotencyKey: string) {

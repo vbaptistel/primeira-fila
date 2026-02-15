@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
+import { AuditModule } from "./common/audit/audit.module";
 import { AuthModule } from "./common/auth/auth.module";
 import { ProvisioningModule } from "./common/provisioning/provisioning.module";
 import { PrismaModule } from "./infrastructure/prisma/prisma.module";
+import { CheckInModule } from "./modules/check-in/check-in.module";
 import { CommercialPoliciesModule } from "./modules/commercial-policies/commercial-policies.module";
 import { EventsModule } from "./modules/events/events.module";
 import { HealthController } from "./modules/health/health.controller";
@@ -9,12 +11,14 @@ import { OrdersModule } from "./modules/orders/orders.module";
 
 @Module({
   imports: [
+    AuditModule,
     AuthModule,
     PrismaModule,
     ProvisioningModule,
     CommercialPoliciesModule,
     EventsModule,
-    OrdersModule
+    OrdersModule,
+    CheckInModule
   ],
   controllers: [HealthController],
   providers: []

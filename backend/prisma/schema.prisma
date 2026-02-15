@@ -60,6 +60,25 @@ enum PaymentMethod {
   DEBIT_CARD
 }
 
+enum TicketStatus {
+  VALID
+  USED
+  CANCELLED
+}
+
+enum RefundStatus {
+  REQUESTED
+  APPROVED
+  DENIED
+}
+
+enum AuditAction {
+  CHECK_IN
+  REFUND_REQUESTED
+  REFUND_APPROVED
+  REFUND_DENIED
+}
+
 model CommercialPolicy {
   id                  String   @id @default(uuid()) @db.Uuid
   tenantId            String   @map("tenant_id") @db.Uuid
@@ -132,6 +151,7 @@ model Session {
   holds         SessionHold[]
   orders        Order[]
   orderItems    OrderItem[]
+  tickets       Ticket[]
   sessionSeats  SessionSeat[]
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -153,6 +173,7 @@ model SessionSeat {
   session    Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   holdSeats  SessionHoldSeat[]
   orderItems OrderItem[]
+  tickets    Ticket[]
   createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -211,6 +232,8 @@ model Order {
   hold                    SessionHold @relation(fields: [holdId], references: [id], onDelete: Restrict)
   payments                Payment[]
   items                   OrderItem[]
+  tickets                 Ticket[]
+  refunds                 Refund[]
   createdAt               DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -235,6 +258,7 @@ model Payment {
   approvedAt        DateTime?     @map("approved_at") @db.Timestamptz(6)
   deniedAt          DateTime?     @map("denied_at") @db.Timestamptz(6)
   order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds           Refund[]
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -253,9 +277,68 @@ model OrderItem {
   order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   session        Session  @relation(fields: [sessionId], references: [id], onDelete: Restrict)
   seat           SessionSeat @relation(fields: [seatId], references: [id], onDelete: Restrict)
+  ticket         Ticket?
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([orderId, seatId])
   @@index([sessionId, seatId])
   @@map("order_items")
+}
+
+model Ticket {
+  id          String       @id @default(uuid()) @db.Uuid
+  tenantId    String       @map("tenant_id") @db.Uuid
+  orderId     String       @map("order_id") @db.Uuid
+  orderItemId String       @unique @map("order_item_id") @db.Uuid
+  sessionId   String       @map("session_id") @db.Uuid
+  seatId      String       @map("seat_id") @db.Uuid
+  qrCode      String       @unique @map("qr_code") @db.VarChar(64)
+  status      TicketStatus @default(VALID)
+  usedAt      DateTime?    @map("used_at") @db.Timestamptz(6)
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem   OrderItem    @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  session     Session      @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  seat        SessionSeat  @relation(fields: [seatId], references: [id], onDelete: Restrict)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId, orderId])
+  @@index([orderId, status])
+  @@map("tickets")
+}
+
+model Refund {
+  id                 String       @id @default(uuid()) @db.Uuid
+  tenantId           String       @map("tenant_id") @db.Uuid
+  orderId            String       @map("order_id") @db.Uuid
+  paymentId          String       @map("payment_id") @db.Uuid
+  reasonCode         String       @map("reason_code") @db.VarChar(60)
+  reasonDescription  String?      @map("reason_description") @db.VarChar(500)
+  amountCents        Int          @map("amount_cents")
+  status             RefundStatus @default(REQUESTED)
+  requestedBy        String       @map("requested_by") @db.Uuid
+  processedAt        DateTime?    @map("processed_at") @db.Timestamptz(6)
+  order              Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment            Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId, orderId])
+  @@index([orderId, status])
+  @@map("refunds")
+}
+
+model AuditLog {
+  id           String      @id @default(uuid()) @db.Uuid
+  tenantId     String      @map("tenant_id") @db.Uuid
+  actorId      String      @map("actor_id") @db.Uuid
+  action       AuditAction
+  resourceType String      @map("resource_type") @db.VarChar(60)
+  resourceId   String      @map("resource_id") @db.Uuid
+  metadata     Json?
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([tenantId, action])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
 }

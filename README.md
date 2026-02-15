@@ -41,7 +41,7 @@ npm run dev --workspace @primeira-fila/backend
 ## Backend + Banco
 
 ```bash
-npm run prisma:generate --workspace @primeira-fila/backend
+npm run db:generate --workspace @primeira-fila/backend
 npm run db:push --workspace @primeira-fila/backend
 ```
 

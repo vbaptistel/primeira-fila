@@ -25,16 +25,16 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-008` | `US-002` | Backend | Implementar hold de assento com TTL de 10 minutos. | Hold criado e expirado corretamente. | `TASK-007` | `CONCLUIDA` |
 | `TASK-009` | `US-003` | Backend | Implementar criação de pedido com idempotência. | Pedido não duplica com mesma chave idempotente. | `TASK-008` | `CONCLUIDA` |
 | `TASK-010` | `US-003` | Backend | Integrar gateway de pagamento (criação e confirmação). | Fluxo de pagamento aprovado/negado funcional. | `TASK-009` | `CONCLUIDA` |
-| `TASK-011` | `US-003` | Backend | Implementar webhook idempotente do gateway. | Eventos duplicados não geram inconsistência. | `TASK-010` | `TODO` |
-| `TASK-012` | `US-004` | Backend | Implementar emissão de ticket QR após pagamento aprovado. | Ticket `valid` criado somente após pagamento confirmado. | `TASK-010` | `TODO` |
-| `TASK-013` | `US-004` | Backend | Criar endpoint de consulta de tickets por pedido. | Buyer acessa apenas tickets permitidos por escopo. | `TASK-012` | `TODO` |
-| `TASK-014` | `US-005` | Backend | Implementar endpoint de validação de QR de check-in. | Ticket usado uma vez; segundo uso negado. | `TASK-012` | `TODO` |
+| `TASK-011` | `US-003` | Backend | Implementar webhook idempotente do gateway. | Eventos duplicados não geram inconsistência. | `TASK-010` | `CONCLUIDA` |
+| `TASK-012` | `US-004` | Backend | Implementar emissão de ticket QR após pagamento aprovado. | Ticket `valid` criado somente após pagamento confirmado. | `TASK-010` | `CONCLUIDA` |
+| `TASK-013` | `US-004` | Backend | Criar endpoint de consulta de tickets por pedido. | Buyer acessa apenas tickets permitidos por escopo. | `TASK-012` | `CONCLUIDA` |
+| `TASK-014` | `US-005` | Backend | Implementar endpoint de validação de QR de check-in. | Ticket usado uma vez; segundo uso negado. | `TASK-012` | `CONCLUIDA` |
 | `TASK-015` | `US-011` | Backend | Implementar RBAC por tenant em endpoints críticos com claims do Supabase Auth. | Acesso cruzado bloqueado em testes de integração com token válido/inválido. | `TASK-006` | `CONCLUIDA` |
 | `TASK-016` | `US-010` | Backend | Implementar política comercial default `platform_default_v1`. | Tenant novo recebe política default automaticamente. | `TASK-001` | `CONCLUIDA` |
 | `TASK-017` | `US-010` | Backend | Versionar política comercial por tenant. | Alteração salva com `version` e `effective_from`. | `TASK-016` | `CONCLUIDA` |
 | `TASK-018` | `US-010` | Backend | Registrar snapshot financeiro no pedido. | Pedido persiste valores + versão da política aplicada. | `TASK-009`,`TASK-017` | `CONCLUIDA` |
-| `TASK-019` | `US-009` | Backend | Implementar reembolso manual com `reason_code`. | Reembolso respeita matriz e atualiza estados. | `TASK-011`,`TASK-018` | `TODO` |
-| `TASK-020` | `US-009` | Backend | Auditar ações de reembolso e check-in. | Auditoria registra ator, timestamp e ação. | `TASK-014`,`TASK-019` | `TODO` |
+| `TASK-019` | `US-009` | Backend | Implementar reembolso manual com `reason_code`. | Reembolso respeita matriz e atualiza estados. | `TASK-011`,`TASK-018` | `CONCLUIDA` |
+| `TASK-020` | `US-009` | Backend | Auditar ações de reembolso e check-in. | Auditoria registra ator, timestamp e ação. | `TASK-014`,`TASK-019` | `CONCLUIDA` |
 | `TASK-021` | `US-001` | Frontend Customer | Criar home/listagem de eventos no `web-customer`. | Listagem de sessões públicas funcional. | `TASK-002`,`TASK-006` | `TODO` |
 | `TASK-022` | `US-001` | Frontend Customer | Criar página de detalhe de sessão com disponibilidade. | Usuário visualiza preço e disponibilidade atual. | `TASK-021`,`TASK-007` | `TODO` |
 | `TASK-023` | `US-002` | Frontend Customer | Implementar seleção de assentos e criação de hold. | Hold gerado com tratamento de conflito/expiração. | `TASK-022`,`TASK-008` | `TODO` |
@@ -66,14 +66,14 @@ Este backlog operacionaliza as estórias do Documento 15 e permite acompanhament
 | `TASK-049` | `US-014` | Deploy Frontend | Configurar projeto Vercel do `web-backoffice` com integração nativa do repositório. | Deploy automático via Vercel em push da branch principal funcional. | `TASK-003` | `CONCLUIDA` |
 | `TASK-050` | `US-013` | Segurança | Configurar variáveis de ambiente e segredos do backend na Vercel. | Segredos segregados por ambiente (`preview`/`production`) e sem exposição no repositório. | `TASK-039` | `CONCLUIDA` |
 | `TASK-051` | `US-015` | Qualidade | Criar testes de arquitetura para bloquear import cruzado. | Teste automatizado falha em import proibido. | `TASK-005` | `CONCLUIDA` |
-| `TASK-052` | `US-003` | Qualidade | Criar testes de integração de idempotência de pagamento. | Cenários duplicados não quebram consistência. | `TASK-010`,`TASK-011` | `TODO` |
-| `TASK-053` | `US-002` | Qualidade | Criar testes de concorrência de assentos. | Sem overbooking em cenários concorrentes críticos. | `TASK-008` | `TODO` |
+| `TASK-052` | `US-003` | Qualidade | Criar testes de integração de idempotência de pagamento. | Cenários duplicados não quebram consistência. | `TASK-010`,`TASK-011` | `CONCLUIDA` |
+| `TASK-053` | `US-002` | Qualidade | Criar testes de concorrência de assentos. | Sem overbooking em cenários concorrentes críticos. | `TASK-008` | `CONCLUIDA` |
 | `TASK-054` | `US-005` | Qualidade | Criar E2E de check-in com duplo uso de QR. | Primeiro uso aprovado; segundo uso negado. | `TASK-031` | `TODO` |
 | `TASK-055` | `US-009` | Qualidade | Criar E2E de reembolso manual com validação de política. | Reembolso permitido/negado conforme matriz de regras. | `TASK-032` | `TODO` |
 | `TASK-056` | `US-015` | Operação | Criar dashboard operacional inicial (erro, latência, disponibilidade). | Dashboard publicado e revisado com operação. | `TASK-038` | `TODO` |
 | `TASK-057` | `US-015` | Operação | Criar playbook de incidente backend. | Playbook documentado e validado pelo time. | `TASK-056` | `TODO` |
 | `TASK-058` | `US-010` | Backend | Criar endpoint de consulta de política comercial por tenant. | Endpoint retorna política ativa/default com versão. | `TASK-017` | `CONCLUIDA` |
-| `TASK-059` | `US-004` | Backend | Garantir envio de e-mail transacional síncrono com fallback manual. | Falhas registradas e reenvio manual possível no backoffice. | `TASK-012` | `TODO` |
+| `TASK-059` | `US-004` | Backend | Garantir envio de e-mail transacional síncrono com fallback manual. | Falhas registradas e reenvio manual possível no backoffice. | `TASK-012` | `BLOQUEADA` |
 | `TASK-060` | `US-008` | Frontend Backoffice | Criar tela para reenvio manual de e-mail de ingresso. | Operador executa reenvio e registra auditoria da ação. | `TASK-059`,`TASK-030` | `TODO` |
 
 ## Sequenciamento por Fases e Sprints
@@ -105,6 +105,7 @@ Cadência sugerida: sprints de 2 semanas.
 - Dependências externas podem deslocar tasks críticas de infraestrutura e integração.
 
 ## Changelog
+- `v1.21.0` - 2026-02-15 - Sprint 04 (Checkout Core) concluída: `TASK-053` (testes de concorrência de assentos, 7 testes), `TASK-011` (webhook idempotente `POST /v1/webhooks/payments`), `TASK-012` (emissão automática de tickets QR após aprovação de pagamento, modelo `Ticket` no Prisma), `TASK-013` (consulta de tickets `GET /v1/orders/:orderId/tickets`), `TASK-014` (check-in por QR `POST /v1/check-in` com RBAC para operator/organizer_admin/platform_admin), `TASK-019` (reembolso manual `POST /v1/tenants/:tenantId/orders/:orderId/refunds` com modelo `Refund`, reversão completa de pagamento/pedido/assento/ticket), `TASK-052` (testes de idempotência de pagamento, 7 testes), `TASK-020` (auditoria com modelo `AuditLog` e `AuditService` integrado em check-in e reembolso). `TASK-059` marcada como `BLOQUEADA` (provider de e-mail não definido). Script `db:migrate` adicionado ao `package.json`.
 - `v1.20.0` - 2026-02-15 - `TASK-018` atualizada para `CONCLUIDA`: snapshot financeiro já implementado no pedido com `ticketSubtotalCents`, `serviceFeeCents`, `totalAmountCents` e `commercialPolicyVersion` persistidos no `Order` a partir da política ativa no momento da criação.
 - `v1.19.0` - 2026-02-15 - Hardening Sprint 03: `TASK-016` corrigida com `TenantProvisioningInterceptor` global que garante política default automaticamente na primeira requisição autenticada de cada tenant (cache em memória); `TASK-015` fortalecida com 20 testes unitários do `TenantRbacGuard` cobrindo autenticação, controle de roles, isolamento de tenant (acesso cruzado bloqueado) e bypass de `platform_admin`.
 - `v1.18.0` - 2026-02-14 - Sprint 03 concluída no backend com `TASK-015` (RBAC por tenant com claims JWT), `TASK-016` (default `platform_default_v1` automático), `TASK-017` (versionamento de política por tenant), `TASK-058` (endpoint de consulta de política ativa/default) e `TASK-035` (logs estruturados com `trace_id`).

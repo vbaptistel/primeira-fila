@@ -1,7 +1,13 @@
-import { Body, Controller, Headers, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
+import { FastifyRequest } from "fastify";
+import { AuthPrincipal } from "../../common/auth/auth.types";
+import { TenantRbacGuard } from "../../common/auth/tenant-rbac.guard";
+import { TenantRoles } from "../../common/auth/roles.decorator";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { CreateOrderPaymentDto } from "./dto/create-order-payment.dto";
+import { CreateRefundDto } from "./dto/create-refund.dto";
+import { WebhookPaymentDto } from "./dto/webhook-payment.dto";
 import { OrdersService } from "./orders.service";
 
 @ApiTags("orders")
@@ -24,5 +30,41 @@ export class OrdersController {
     @Body() dto: CreateOrderPaymentDto
   ) {
     return this.ordersService.createOrderPayment(orderId, idempotencyKey, dto);
+  }
+
+  @Get(":orderId/tickets")
+  getOrderTickets(@Param("orderId", ParseUUIDPipe) orderId: string) {
+    return this.ordersService.getOrderTickets(orderId);
+  }
+}
+
+@ApiTags("refunds")
+@UseGuards(TenantRbacGuard)
+@TenantRoles("organizer_admin", "platform_admin")
+@Controller("tenants/:tenantId/orders/:orderId/refunds")
+export class RefundsController {
+  constructor(private readonly ordersService: OrdersService) {}
+
+  @Post()
+  createRefund(
+    @Param("tenantId", ParseUUIDPipe) tenantId: string,
+    @Param("orderId", ParseUUIDPipe) orderId: string,
+    @Req() request: FastifyRequest & { authPrincipal?: AuthPrincipal },
+    @Body() dto: CreateRefundDto
+  ) {
+    const requestedBy = request.authPrincipal?.userId ?? "unknown";
+    return this.ordersService.createRefund(tenantId, orderId, requestedBy, dto);
+  }
+}
+
+@ApiTags("webhooks")
+@Controller("webhooks")
+export class WebhooksController {
+  constructor(private readonly ordersService: OrdersService) {}
+
+  @Post("payments")
+  @HttpCode(HttpStatus.OK)
+  processPaymentWebhook(@Body() dto: WebhookPaymentDto) {
+    return this.ordersService.processWebhook(dto);
   }
 }

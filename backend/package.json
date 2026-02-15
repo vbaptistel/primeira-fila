@@ -3,19 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "npm run prisma:generate",
+    "predev": "npm run db:generate",
     "dev": "nest start --watch",
-    "prebuild": "npm run prisma:generate",
+    "prebuild": "npm run db:generate",
     "build": "nest build",
     "start": "node dist/main.js",
-    "prelint": "npm run prisma:generate",
+    "prelint": "npm run db:generate",
     "lint": "eslint \"src/**/*.ts\"",
-    "pretypecheck": "npm run prisma:generate",
+    "pretypecheck": "npm run db:generate",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "pretest": "npm run prisma:generate",
+    "pretest": "npm run db:generate",
     "test": "vitest run",
-    "prisma:generate": "PRISMA_GENERATE_SKIP_AUTOINSTALL=1 prisma generate",
-    "db:push": "prisma db push"
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset"
   },
   "dependencies": {
     "@fastify/static": "^9.0.0",
