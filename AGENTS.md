@@ -62,6 +62,7 @@ npm run dev --workspace web-backoffice
   - `docs/12-divisao-aplicacoes-monorepo.md`
   - `docs/13-padroes-engenharia-qualidade.md`
   - `docs/16-tasks-implementacao-mvp.md`
+- Sempre implementar testes para código novo ou alterado (unitários, integração ou e2e conforme o contexto).
 - Sempre validar `lint`, `typecheck` e `test:arch` após mudanças relevantes.
 
 ## Atualização de Backlog e Documentação
@@ -76,15 +77,17 @@ npm run dev --workspace web-backoffice
 
 ## Checklist Antes de Encerrar uma Entrega
 1. Código compila e passa em `lint`, `typecheck` e `test:arch`.
-2. Fronteiras backend/frontend continuam respeitadas.
-3. Documentação e status das tasks estão atualizados.
-4. Não houve introdução de componentes assíncronos fora do escopo atual.
+2. Testes foram implementados para o código novo ou alterado.
+3. Fronteiras backend/frontend continuam respeitadas.
+4. Documentação e status das tasks estão atualizados.
+5. Não houve introdução de componentes assíncronos fora do escopo atual.
 
 ## Do / Don't
 
 ### Do
 - Respeitar a separação entre `backend/` e `frontend/`.
 - Implementar regras de negócio no backend.
+- Sempre criar testes para código novo ou alterado.
 - Atualizar documentação e status de task na mesma entrega.
 - Executar validações locais antes de encerrar (`lint`, `typecheck`, `test:arch`).
 
@@ -93,3 +96,4 @@ npm run dev --workspace web-backoffice
 - Não adicionar filas, workers, mensageria ou outbox.
 - Não criar pipeline de deploy no GitHub Actions.
 - Não alterar stack oficial sem registrar decisão técnica (ADR).
+- Não entregar código sem os respectivos testes.
