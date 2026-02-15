@@ -5,6 +5,22 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const TENANT_COOKIE = getTenantCookieName();
 const COOKIE_MAX_AGE = getTenantCookieMaxAge();
 
+function return404(): NextResponse {
+  return new NextResponse(null, { status: 404 });
+}
+
+function setTenantCookieAndNext(tenant: unknown): NextResponse {
+  const tenantValue = Buffer.from(JSON.stringify(tenant)).toString("base64");
+  const res = NextResponse.next();
+  res.cookies.set(TENANT_COOKIE, tenantValue, {
+    maxAge: COOKIE_MAX_AGE,
+    path: "/",
+    httpOnly: false,
+    sameSite: "lax"
+  });
+  return res;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -23,8 +39,26 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Resolver tenant via API do backend
   const host = request.headers.get("host") ?? "";
+  const isLocalhost = host.startsWith("localhost");
+  const devTenantId = process.env.NEXT_PUBLIC_DEV_TENANT_ID?.trim();
+
+  // Excecao para dev local: localhost + DEV_TENANT_ID definido
+  if (isLocalhost && devTenantId) {
+    try {
+      const response = await fetch(`${BACKEND_URL}/v1/public/tenants/by-id/${devTenantId}`, {
+        signal: AbortSignal.timeout(3000)
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.tenant) {
+          return setTenantCookieAndNext(data.tenant);
+        }
+      }
+    } catch {
+      // Falha ao obter tenant de dev, prossegue para 404
+    }
+  }
 
   try {
     const response = await fetch(`${BACKEND_URL}/v1/public/tenants/resolve?domain=${host}`, {
@@ -32,28 +66,17 @@ export async function proxy(request: NextRequest) {
     });
 
     if (!response.ok) {
-      // Se nao conseguir resolver tenant, continua sem cookie
-      return NextResponse.next();
+      return return404();
     }
 
     const data = await response.json();
     if (!data.found || !data.tenant) {
-      return NextResponse.next();
+      return return404();
     }
-    const tenantValue = Buffer.from(JSON.stringify(data.tenant)).toString("base64");
 
-    const res = NextResponse.next();
-    res.cookies.set(TENANT_COOKIE, tenantValue, {
-      maxAge: COOKIE_MAX_AGE,
-      path: "/",
-      httpOnly: false,
-      sameSite: "lax"
-    });
-
-    return res;
+    return setTenantCookieAndNext(data.tenant);
   } catch {
-    // Em caso de erro, continua sem tenant
-    return NextResponse.next();
+    return return404();
   }
 }
 

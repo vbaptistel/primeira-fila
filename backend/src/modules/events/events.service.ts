@@ -405,11 +405,14 @@ export class EventsService {
   }
 
   async listPublicEvents(limit = 20, tenantId?: string) {
+    if (!tenantId || !tenantId.trim()) {
+      throw new NotFoundException("Tenant nao resolvido.");
+    }
     const safeLimit = this.normalizeLimit(limit);
 
     return this.prisma.event.findMany({
       where: {
-        ...(tenantId ? { tenantId } : {}),
+        tenantId,
         status: {
           not: EventStatus.ARCHIVED
         },
@@ -451,10 +454,13 @@ export class EventsService {
   }
 
   async getPublicEvent(eventId: string, tenantId?: string) {
+    if (!tenantId || !tenantId.trim()) {
+      throw new NotFoundException("Tenant nao resolvido.");
+    }
     const event = await this.prisma.event.findFirst({
       where: {
         id: eventId,
-        ...(tenantId ? { tenantId } : {}),
+        tenantId,
         status: {
           not: EventStatus.ARCHIVED
         },

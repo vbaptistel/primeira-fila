@@ -3,11 +3,32 @@ import { Badge } from "@primeira-fila/shared";
 import type { PublicEvent } from "@/types/api";
 import { formatCurrency, formatDate, getMinPrice } from "@/lib/format";
 
-type EventCardProps = {
-  event: PublicEvent;
-};
+const cardClassName =
+  "block overflow-hidden rounded-[var(--pf-radius-lg)] border border-[var(--pf-color-border)] bg-[var(--pf-color-surface)]";
 
-export function EventCard({ event }: EventCardProps) {
+type EventCardProps =
+  | { event: PublicEvent; empty?: never }
+  | { event?: never; empty: true };
+
+export function EventCard(props: EventCardProps) {
+  if (props.empty) {
+    return (
+      <div className={cardClassName}>
+        <div className="relative h-48 bg-[var(--pf-color-border)]/[0.15] flex items-center justify-center">
+          <div className="text-center px-4">
+            <p className="text-lg text-[var(--pf-color-text)]">
+              Nenhum evento disponivel no momento.
+            </p>
+            <p className="text-sm text-[var(--pf-color-muted-text)] mt-2">
+              Volte em breve para conferir novos eventos!
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const event = props.event;
   const firstDay = event.eventDays[0];
   const minPrice = getMinPrice(event.eventDays);
   const totalSessions = event.eventDays.reduce(
@@ -18,7 +39,7 @@ export function EventCard({ event }: EventCardProps) {
   return (
     <Link
       href={`/eventos/${event.id}`}
-      className="group block overflow-hidden rounded-[var(--pf-radius-lg)] border border-[var(--pf-color-border)] bg-[var(--pf-color-surface)] transition-shadow hover:shadow-lg"
+      className={`group ${cardClassName} transition-shadow hover:shadow-lg`}
     >
       {/* Placeholder visual para imagem do evento */}
       <div className="relative h-48 bg-gradient-to-br from-[var(--pf-color-primary)] to-[var(--pf-color-accent)] flex items-end p-4">

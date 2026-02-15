@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getTenant } from "@/lib/get-tenant";
 import { TenantProvider } from "@/context/tenant-context";
 import { Header } from "@/components/header";
@@ -7,6 +8,7 @@ import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const tenant = await getTenant();
+  if (!tenant) notFound();
 
   return {
     title: `${tenant.name} | Ingressos`,
@@ -21,6 +23,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const tenant = await getTenant();
+  if (!tenant) notFound();
 
   return (
     <html lang="pt-BR">

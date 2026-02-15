@@ -129,4 +129,14 @@ export class TenancyBrandingController {
 
     return { found: false, tenant: null };
   }
+
+  /** Retorna branding por tenantId. Usado em dev local (localhost + NEXT_PUBLIC_DEV_TENANT_ID). */
+  @Get("public/tenants/by-id/:tenantId")
+  async getPublicTenantById(@Param("tenantId", ParseUUIDPipe) tenantId: string) {
+    const tenant = await this.tenancyBrandingService.getTenantOrNull(tenantId);
+    if (!tenant || !tenant.isActive) {
+      return { found: false, tenant: null };
+    }
+    return { found: true, tenant: this.tenancyBrandingService.getPublicBranding(tenant) };
+  }
 }

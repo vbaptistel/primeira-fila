@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Skeleton } from "@primeira-fila/shared";
 import { getTenant } from "@/lib/get-tenant";
@@ -19,13 +20,8 @@ async function EventList(context: { requestHost?: string; tenantId?: string }) {
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-lg text-[var(--pf-color-muted-text)]">
-          Nenhum evento disponivel no momento.
-        </p>
-        <p className="text-sm text-[var(--pf-color-muted-text)] mt-2">
-          Volte em breve para conferir novos eventos!
-        </p>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <EventCard empty />
       </div>
     );
   }
@@ -42,25 +38,25 @@ async function EventList(context: { requestHost?: string; tenantId?: string }) {
 function EventListSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="overflow-hidden rounded-[var(--pf-radius-lg)] border border-[var(--pf-color-border)] bg-[var(--pf-color-surface)]">
-          <Skeleton className="h-48 w-full rounded-none" />
-          <div className="p-4 space-y-3">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-6 w-24" />
-            </div>
+      <div className="overflow-hidden rounded-[var(--pf-radius-lg)] border border-[var(--pf-color-border)] bg-[var(--pf-color-surface)]">
+        <Skeleton className="h-48 w-full rounded-none" />
+        <div className="p-4 space-y-3">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-6 w-24" />
           </div>
         </div>
-      ))}
+      </div>
     </div>
   );
 }
 
 export default async function HomePage() {
   const [tenant, headersList] = await Promise.all([getTenant(), headers()]);
+  if (!tenant) notFound();
+
   const requestHost =
     headersList.get("x-forwarded-host") ?? headersList.get("host") ?? undefined;
 

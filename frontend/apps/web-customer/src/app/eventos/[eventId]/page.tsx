@@ -37,6 +37,8 @@ function SessionCard({ session, eventId }: { session: PublicSession; eventId: st
 export default async function EventDetailPage({ params }: PageProps) {
   const { eventId } = await params;
   const [tenant, headersList] = await Promise.all([getTenant(), headers()]);
+  if (!tenant) notFound();
+
   const requestHost =
     headersList.get("x-forwarded-host") ?? headersList.get("host") ?? undefined;
 
