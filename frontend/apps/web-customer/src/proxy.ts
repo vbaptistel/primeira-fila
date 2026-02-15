@@ -25,6 +25,7 @@ export async function proxy(request: NextRequest) {
 
   // Resolver tenant via API do backend
   const host = request.headers.get("host") ?? "";
+  console.log("host", host);
 
   try {
     const response = await fetch(`${BACKEND_URL}/v1/public/tenants/resolve?domain=${host}`, {
