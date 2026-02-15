@@ -19,6 +19,7 @@ export function Header() {
               height={40}
               className="h-8 w-auto object-contain"
               priority
+              unoptimized
             />
           ) : (
             <span className="text-lg font-bold" style={{ color: "var(--pf-color-primary)" }}>
