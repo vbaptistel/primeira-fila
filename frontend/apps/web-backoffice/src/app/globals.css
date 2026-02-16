@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@primeira-fila/shared/styles.css";
+@import "@primeira-fila/shared/src/styles/globals.css";
 
 :root {
   --background: var(--pf-color-background);

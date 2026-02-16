@@ -1,10 +1,10 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState, useTransition } from "react";
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Textarea, Select } from "@primeira-fila/shared";
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@primeira-fila/shared";
 import { createEventAction } from "../actions";
 
 const eventSchema = z.object({
@@ -34,6 +34,7 @@ export function EventForm() {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors }
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -91,10 +92,21 @@ export function EventForm() {
 
           <div className="flex flex-col gap-1">
             <Label htmlFor="status">Status</Label>
-            <Select id="status" {...register("status")}>
-              <option value="DRAFT">Rascunho</option>
-              <option value="PUBLISHED">Publicado</option>
-            </Select>
+            <Controller
+              control={control}
+              name="status"
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DRAFT">Rascunho</SelectItem>
+                    <SelectItem value="PUBLISHED">Publicado</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           {serverError && <p className="text-sm text-red-500">{serverError}</p>}

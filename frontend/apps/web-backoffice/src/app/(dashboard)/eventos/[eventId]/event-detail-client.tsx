@@ -17,6 +17,10 @@ import {
   Input,
   Label,
   Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Textarea
 } from "@primeira-fila/shared";
 import { formatDate, formatTime, eventStatusLabels, sessionStatusLabels, formatCurrency } from "@/lib/format";
@@ -171,11 +175,16 @@ export function EventDetailClient({ event }: Props) {
               </div>
               <div className="flex flex-col gap-1">
                 <Label>Status</Label>
-                <Select value={editStatus} onChange={(e) => setEditStatus(e.target.value as EventStatus)}>
-                  <option value="DRAFT">Rascunho</option>
-                  <option value="PUBLISHED">Publicado</option>
-                  <option value="CANCELLED">Cancelado</option>
-                  <option value="ARCHIVED">Arquivado</option>
+                <Select value={editStatus} onValueChange={(val) => setEditStatus(val as EventStatus)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DRAFT">Rascunho</SelectItem>
+                    <SelectItem value="PUBLISHED">Publicado</SelectItem>
+                    <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                    <SelectItem value="ARCHIVED">Arquivado</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-2">

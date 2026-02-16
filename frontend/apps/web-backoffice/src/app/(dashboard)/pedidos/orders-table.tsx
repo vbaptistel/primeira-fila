@@ -10,7 +10,11 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@primeira-fila/shared";
 import { formatCurrency, formatDateTime, orderStatusLabels } from "@/lib/format";
 import type { AdminEvent, AdminOrder, OrderStatus } from "@/types/api";
@@ -54,27 +58,35 @@ export function OrdersTable({ orders, total, events }: Props) {
           <label className="text-xs font-semibold text-[var(--pf-color-muted-text)]">Status</label>
           <Select
             value={currentStatus}
-            onChange={(e) => updateFilter("status", e.target.value)}
-            className="w-48"
+            onValueChange={(val) => updateFilter("status", val)}
           >
-            <option value="">Todos</option>
-            <option value="PENDING_PAYMENT">Aguardando Pagamento</option>
-            <option value="PAID">Pago</option>
-            <option value="CANCELLED">Cancelado</option>
-            <option value="EXPIRED">Expirado</option>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos</SelectItem>
+              <SelectItem value="PENDING_PAYMENT">Aguardando Pagamento</SelectItem>
+              <SelectItem value="PAID">Pago</SelectItem>
+              <SelectItem value="CANCELLED">Cancelado</SelectItem>
+              <SelectItem value="EXPIRED">Expirado</SelectItem>
+            </SelectContent>
           </Select>
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-[var(--pf-color-muted-text)]">Evento</label>
           <Select
             value={currentEventId}
-            onChange={(e) => updateFilter("eventId", e.target.value)}
-            className="w-64"
+            onValueChange={(val) => updateFilter("eventId", val)}
           >
-            <option value="">Todos os eventos</option>
-            {events.map((event) => (
-              <option key={event.id} value={event.id}>{event.name}</option>
-            ))}
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Todos os eventos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Todos os eventos</SelectItem>
+              {events.map((event) => (
+                <SelectItem key={event.id} value={event.id}>{event.name}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
       </div>
