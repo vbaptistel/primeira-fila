@@ -45,6 +45,24 @@ export class TenancyBrandingController {
     return this.tenancyBrandingService.toOutput(tenant);
   }
 
+  @Get("tenants")
+  @UseGuards(TenantRbacGuard)
+  @TenantRoles("platform_admin")
+  async listTenants(
+    @Query("limit") limit?: string,
+    @Query("cursor") cursor?: string
+  ) {
+    const limitNum = limit ? Math.min(Math.max(1, parseInt(limit, 10) || 20), 100) : 20;
+    const { items, nextCursor } = await this.tenancyBrandingService.listTenants(
+      limitNum,
+      cursor
+    );
+    return {
+      items: items.map((t) => this.tenancyBrandingService.toOutput(t)),
+      nextCursor: nextCursor ?? null
+    };
+  }
+
   @Get("tenants/:tenantId")
   @UseGuards(TenantRbacGuard)
   @TenantRoles("organizer_admin", "platform_admin")

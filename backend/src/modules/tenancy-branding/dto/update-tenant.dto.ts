@@ -1,11 +1,13 @@
 import { Transform } from "class-transformer";
 import {
   IsBoolean,
+  IsInt,
   IsObject,
   IsOptional,
   IsString,
   Matches,
-  MaxLength
+  MaxLength,
+  Min
 } from "class-validator";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -103,4 +105,9 @@ export class UpdateTenantDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1, { message: "maxUsers deve ser pelo menos 1." })
+  maxUsers?: number;
 }

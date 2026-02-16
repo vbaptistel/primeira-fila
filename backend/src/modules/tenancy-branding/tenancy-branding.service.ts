@@ -48,7 +48,8 @@ export class TenancyBrandingService {
           termsUrl: dto.termsUrl,
           privacyUrl: dto.privacyUrl,
           socialLinks: dto.socialLinks ?? undefined,
-          isActive: dto.isActive ?? true
+          isActive: dto.isActive ?? true,
+          maxUsers: dto.maxUsers ?? undefined
         }
       });
     } catch (error) {
@@ -89,6 +90,19 @@ export class TenancyBrandingService {
     });
   }
 
+  async listTenants(limit = 20, cursor?: string): Promise<{ items: Tenant[]; nextCursor?: string }> {
+    const take = Math.min(Math.max(1, limit), 100);
+    const items = await this.prisma.tenant.findMany({
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      take: take + 1,
+      orderBy: { id: "asc" }
+    });
+    const hasMore = items.length > take;
+    const result = hasMore ? items.slice(0, take) : items;
+    const nextCursor = hasMore ? result[result.length - 1]?.id : undefined;
+    return { items: result, nextCursor };
+  }
+
   async updateTenant(tenantId: string, dto: UpdateTenantDto): Promise<Tenant> {
     await this.getTenant(tenantId);
 
@@ -109,7 +123,8 @@ export class TenancyBrandingService {
           ...(dto.termsUrl !== undefined && { termsUrl: dto.termsUrl }),
           ...(dto.privacyUrl !== undefined && { privacyUrl: dto.privacyUrl }),
           ...(dto.socialLinks !== undefined && { socialLinks: dto.socialLinks }),
-          ...(dto.isActive !== undefined && { isActive: dto.isActive })
+          ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+          ...(dto.maxUsers !== undefined && { maxUsers: dto.maxUsers })
         }
       });
 
@@ -209,6 +224,7 @@ export class TenancyBrandingService {
       customDomain: tenant.customDomain,
       customDomainStatus: tenant.customDomainStatus,
       customDomainVerifiedAt: tenant.customDomainVerifiedAt,
+      maxUsers: tenant.maxUsers,
       createdAt: tenant.createdAt,
       updatedAt: tenant.updatedAt
     };

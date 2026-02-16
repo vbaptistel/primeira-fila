@@ -49,10 +49,11 @@ docs/
 - `frontend/packages/shared`:
   - componentes base de `shadcn/ui`;
   - design tokens, hooks e utilitários de frontend;
-  - consumo exclusivo por `web-customer` e `web-backoffice`.
+  - consumo por **web-backoffice** e pelo futuro **web-platform** (frontend dedicado à plataforma).
+- `frontend/apps/web-customer` não consome o shared; possui componentes de UI próprios internalizados no app (Badge, Button, Input, Label, Separator, Skeleton e estilos associados), permitindo evoluções específicas da experiência do comprador sem impactar o backoffice.
 
 ## Regras de Dependência entre Apps e Packages
-- `frontend/apps/*` podem depender de `frontend/packages/shared`.
+- `frontend/apps/*` podem depender de `frontend/packages/shared`; o web-customer opta por não depender (componentes internalizados).
 - `backend/*` não pode importar nada de `frontend/*`.
 - `frontend/*` não pode importar nada de `backend/*`.
 - Integração backend/frontend ocorre exclusivamente por contratos HTTP (OpenAPI).
@@ -81,6 +82,7 @@ docs/
 - Falta de contrato OpenAPI bem versionado pode quebrar integração sem compartilhamento de código.
 
 ## Changelog
+- `v2.2.0` - 2026-02-15 - Web-customer: componentes de UI internalizados (Badge, Button, Input, Label, Separator, Skeleton); remoção da dependência de `@primeira-fila/shared`. Shared permanece para web-backoffice e futuro web-platform.
 - `v2.1.0` - 2026-02-15 - Web-backoffice: gestão de usuários do tenant (Doc 18). Previsão de frontend dedicado à plataforma (web-platform) para fase posterior.
 - `v2.0.0` - 2026-02-14 - Ajuste para backend único em modo síncrono e estrutura final de frontend compartilhado.
 - `v1.1.0` - 2026-02-14 - Separação backend/frontend com backend único e pacote compartilhado exclusivo de frontend.

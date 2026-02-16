@@ -13,6 +13,7 @@ import { EventsModule } from "./modules/events/events.module";
 import { HealthController } from "./modules/health/health.controller";
 import { OrdersModule } from "./modules/orders/orders.module";
 import { TenancyBrandingModule } from "./modules/tenancy-branding/tenancy-branding.module";
+import { TenantUsersModule } from "./modules/tenant-users/tenant-users.module";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TenancyBrandingModule } from "./modules/tenancy-branding/tenancy-brandi
     PrismaModule,
     ProvisioningModule,
     TenancyBrandingModule,
+    TenantUsersModule,
     CommercialPoliciesModule,
     EventsModule,
     OrdersModule,
