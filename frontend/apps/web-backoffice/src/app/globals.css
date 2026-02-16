@@ -2,28 +2,12 @@
 @import "@primeira-fila/shared/src/styles/globals.css";
 @source "../../../../packages/shared";
 
-:root {
-  --background: var(--pf-color-background);
-  --foreground: var(--pf-color-text);
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--pf-font-sans);
   --font-mono: var(--pf-font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--pf-font-sans);
   min-height: 100vh;
 }

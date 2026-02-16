@@ -1,17 +1,34 @@
+import { cookies } from "next/headers";
 import { requireSession } from "@/lib/auth";
-import { Sidebar } from "@/components/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@primeira-fila/shared";
 
 export default async function DashboardLayout({
-  children
+  children,
 }: {
   children: React.ReactNode;
 }) {
   const session = await requireSession();
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar email={session.email} />
-      <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-    </div>
+    <SidebarProvider
+      defaultOpen={defaultOpen}
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar variant="inset" email={session.email} />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
