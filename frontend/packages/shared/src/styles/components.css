@@ -316,3 +316,111 @@
   color: var(--pf-color-muted-text);
   background: var(--pf-color-border);
 }
+
+/* ─── Table ──────────────────────────────────────────────────── */
+
+.pf-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.pf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--pf-font-sans);
+  font-size: 0.875rem;
+}
+
+.pf-table__header {
+  border-bottom: 1px solid var(--pf-color-border);
+}
+
+.pf-table__head {
+  padding: var(--pf-space-3) var(--pf-space-4);
+  text-align: left;
+  font-weight: 600;
+  color: var(--pf-color-muted-text);
+  white-space: nowrap;
+}
+
+.pf-table__body .pf-table__row {
+  border-bottom: 1px solid var(--pf-color-border);
+  transition: background 0.1s ease;
+}
+
+.pf-table__body .pf-table__row:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.pf-table__cell {
+  padding: var(--pf-space-3) var(--pf-space-4);
+  color: var(--pf-color-text);
+}
+
+/* ─── Select ─────────────────────────────────────────────────── */
+
+.pf-select {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--pf-space-3);
+  border: 1px solid var(--pf-color-border);
+  border-radius: var(--pf-radius-md);
+  background: var(--pf-color-surface);
+  color: var(--pf-color-text);
+  font-family: var(--pf-font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: var(--pf-space-8, 2rem);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pf-select:focus {
+  outline: none;
+  border-color: var(--pf-color-primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+.pf-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Textarea ───────────────────────────────────────────────── */
+
+.pf-textarea {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  padding: var(--pf-space-2) var(--pf-space-3);
+  border: 1px solid var(--pf-color-border);
+  border-radius: var(--pf-radius-md);
+  background: var(--pf-color-surface);
+  color: var(--pf-color-text);
+  font-family: var(--pf-font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pf-textarea::placeholder {
+  color: var(--pf-color-muted-text);
+  opacity: 0.7;
+}
+
+.pf-textarea:focus {
+  outline: none;
+  border-color: var(--pf-color-primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+.pf-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
