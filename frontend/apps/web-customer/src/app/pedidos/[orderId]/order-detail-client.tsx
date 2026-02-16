@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Badge, Separator } from "@primeira-fila/shared";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import type { OrderResponse } from "@/types/api";
 

@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Skeleton } from "@primeira-fila/shared";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getTenant } from "@/lib/get-tenant";
 import { EventCard } from "@/components/event-card";
 import { listPublicEvents, resolveTenantByHost } from "@/lib/api";

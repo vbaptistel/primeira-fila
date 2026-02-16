@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Button, Input, Label } from "@primeira-fila/shared";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { requestOrderAccessAction } from "./actions";
 
 export default function OrdersAccessPage() {

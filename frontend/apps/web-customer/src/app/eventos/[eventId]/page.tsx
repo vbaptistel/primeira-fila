@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Badge, Separator } from "@primeira-fila/shared";
-import { Button } from "@primeira-fila/shared";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { getPublicEvent, resolveTenantByHost } from "@/lib/api";
 import { getTenant } from "@/lib/get-tenant";
 import { formatCurrency, formatDate, formatTime } from "@/lib/format";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge } from "@primeira-fila/shared";
+import { Badge } from "@/components/ui/badge";
 import type { PublicEvent } from "@/types/api";
 import { formatCurrency, formatDate, getMinPrice } from "@/lib/format";
 

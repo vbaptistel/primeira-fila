@@ -32,7 +32,7 @@ export function LoginForm() {
     setServerError(null);
     startTransition(async () => {
       const result = await loginAction(data);
-      if (result?.error) {
+      if ("error" in result) {
         setServerError(result.error);
         return;
       }

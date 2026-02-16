@@ -175,3 +175,18 @@ export type ApiError = {
   message: string;
   traceId?: string;
 };
+
+export type CreateTenantUserPayload = {
+  email: string;
+  displayName?: string;
+  password?: string;
+  role: "admin" | "organizer_admin" | "operator";
+};
+
+export type TenantUser = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  role: string;
+  createdAt: string;
+};

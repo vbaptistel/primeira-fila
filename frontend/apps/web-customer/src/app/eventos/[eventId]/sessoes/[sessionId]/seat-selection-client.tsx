@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button } from "@primeira-fila/shared";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { createHoldAction } from "./actions";
 import type { PublicSessionSeat, SessionSeatStatus } from "@/types/api";
 

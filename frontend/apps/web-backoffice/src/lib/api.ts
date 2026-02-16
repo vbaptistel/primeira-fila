@@ -10,8 +10,26 @@ import type {
   UpdateEventPayload,
   UpdateEventDayPayload,
   UpdateSessionPayload,
-  UpdateSeatPayload
+  UpdateSeatPayload,
+  CreateTenantUserPayload,
+  TenantUser
 } from "@/types/api";
+
+export type {
+  AdminEvent,
+  AdminOrdersResponse,
+  AdminSessionSeat,
+  CreateEventPayload,
+  CreateEventDayPayload,
+  CreateSessionPayload,
+  CreateSeatPayload,
+  UpdateEventPayload,
+  UpdateEventDayPayload,
+  UpdateSessionPayload,
+  UpdateSeatPayload,
+  CreateTenantUserPayload,
+  TenantUser
+};
 
 type AuthOpts = { token: string };
 
@@ -98,4 +116,17 @@ export function listOrders(
   if (params.offset) searchParams.set("offset", String(params.offset));
   const qs = searchParams.toString();
   return api.get<AdminOrdersResponse>(`/v1/tenants/${tenantId}/orders${qs ? `?${qs}` : ""}`, { token: opts.token });
+}
+// ─── Users ────────────────────────────────────────────────────
+
+export function listTenantUsers(tenantId: string, opts: AuthOpts): Promise<TenantUser[]> {
+  return api.get<TenantUser[]>(`/v1/tenants/${tenantId}/users`, { token: opts.token });
+}
+
+export function createTenantUser(
+  tenantId: string,
+  data: CreateTenantUserPayload,
+  opts: AuthOpts
+): Promise<TenantUser> {
+  return api.post<TenantUser>(`/v1/tenants/${tenantId}/users`, data, { token: opts.token });
 }
