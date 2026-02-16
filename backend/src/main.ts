@@ -14,6 +14,9 @@ async function bootstrap() {
     new FastifyAdapter({ logger: true })
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  await app.register(require("@fastify/multipart"));
+
   app.setGlobalPrefix("v1", {
     exclude: ["health"]
   });

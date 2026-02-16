@@ -61,16 +61,27 @@ export class SupabaseJwtVerifierService {
     }
 
     const client = this.getSupabaseClient();
-    const { data, error } = await client.auth.getClaims(token);
+    try {
+      const { data, error } = await client.auth.getClaims(token);
 
-    if (error) {
+      if (error) {
+        throw new UnauthorizedException("Token invalido.");
+      }
+      if (!data?.claims) {
+        throw new UnauthorizedException("Token invalido.");
+      }
+
+      return data.claims as JwtClaims;
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("expired") || msg.includes("JWT has expired")) {
+        throw new UnauthorizedException("Token expirado.");
+      }
       throw new UnauthorizedException("Token invalido.");
     }
-    if (!data?.claims) {
-      throw new UnauthorizedException("Token invalido.");
-    }
-
-    return data.claims as JwtClaims;
   }
 
   private getSupabaseClient(): SupabaseClient {

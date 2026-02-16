@@ -73,11 +73,10 @@ for (const file of candidateEnvFiles) {
 
 const currentDatabaseUrl = process.env.DATABASE_URL;
 const directDatabaseUrl = process.env.DIRECT_URL;
-const isProduction = process.env.NODE_ENV === "production";
 
-if (
-  directDatabaseUrl &&
-  (!currentDatabaseUrl || (!isProduction && isSupabasePoolerUrl(currentDatabaseUrl)))
-) {
+// Com Supabase, o pooler em modo transação (porta 6543) pode gerar
+// "permission denied for database postgres" no Postgres. Usar DIRECT_URL
+// (conexão direta/session, porta 5432) evita esse erro em qualquer ambiente.
+if (directDatabaseUrl && (!currentDatabaseUrl || isSupabasePoolerUrl(currentDatabaseUrl ?? ""))) {
   process.env.DATABASE_URL = directDatabaseUrl;
 }

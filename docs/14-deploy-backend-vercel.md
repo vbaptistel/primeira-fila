@@ -72,6 +72,27 @@ O backend usa apenas **verificação local do JWT** (`auth.getClaims(token)`), s
 - Projeto Supabase dedicado ao ambiente de produção do MVP.
 - Migrações executadas de forma controlada antes da promoção de release crítica.
 
+### Pooler e erro "permission denied for database postgres"
+
+Se ao usar o pooler em **modo transação** (porta 6543) aparecer no log do Postgres o erro `permission denied for database postgres`, o backend passa a usar automaticamente a **conexão direta** quando a variável `DIRECT_URL` estiver definida. Configure as duas URLs no ambiente:
+
+| Variável | Descrição |
+|----------|-----------|
+| `DATABASE_URL` | URL do pooler Supabase (ex.: `...pooler.supabase.com:6543/postgres?pgbouncer=true`) ou conexão direta. |
+| `DIRECT_URL` | URL da conexão direta/session (ex.: `...pooler.supabase.com:5432/postgres`). Se definida e `DATABASE_URL` for o pooler na porta 6543, o backend usa `DIRECT_URL` em todos os ambientes para evitar o erro de permissão. |
+
+Recomenda-se definir `DIRECT_URL` nos ambientes (incluindo Vercel) quando usar Supabase com pooler na porta 6543.
+
+## Storage (Supabase) – assets de tenant
+
+O backend envia logos e favicons para o bucket **`tenant-assets`** no Supabase Storage. É necessário:
+
+1. **Criar o bucket** `tenant-assets` no projeto Supabase (Dashboard → Storage).
+2. Deixar o bucket **público** para leitura (ou configurar políticas RLS conforme a documentação do Supabase). O upload é feito com `SUPABASE_SERVICE_ROLE_KEY`, que ignora RLS.
+3. Garantir que as variáveis `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` estejam configuradas no backend.
+
+Se o bucket não existir ou houver falha de permissão no Storage, o upload pode retornar erro genérico; em alguns casos o log do Postgres pode mostrar erros relacionados ao schema `storage`.
+
 ## Baseline de Segurança do Supabase (TASK-042)
 - Role de runtime dedicada para o backend (sem privilégios administrativos).
 - Revogação de privilégios amplos de `PUBLIC` no schema `public`.
@@ -84,6 +105,9 @@ O backend usa apenas **verificação local do JWT** (`auth.getClaims(token)`), s
 - Referência versionada: `backend/prisma/sql/supabase-security-baseline.sql`.
 - Comando de aplicação (com credencial administrativa):
   - `psql "$DATABASE_URL" -f backend/prisma/sql/supabase-security-baseline.sql`
+- **Reversão:** se o baseline causar erro "permission denied for database postgres" (ex.: ao usar Storage ou pooler), executar o script de reversão (restaura privilégios e desativa RLS no schema public):
+  - `psql "$DATABASE_URL" -f backend/prisma/sql/revert-supabase-security-baseline.sql`
+  - Ou executar o conteúdo de `backend/prisma/sql/revert-supabase-security-baseline.sql` no SQL Editor do Supabase com papel administrativo.
 
 ### Checklist Operacional de Segurança (TASK-042)
 - [x] Projeto Supabase provisionado para produção.
@@ -164,6 +188,8 @@ Evidência operacional registrada (2026-02-14):
 - Deploy em horário de pico aumenta risco operacional em caso de regressão.
 
 ## Changelog
+- `v2.7.0` - 2026-02-15 - Script de reversão do baseline de segurança (`revert-supabase-security-baseline.sql`) para corrigir "permission denied for database postgres" quando o baseline foi aplicado.
+- `v2.6.0` - 2026-02-15 - Uso de `DIRECT_URL` com pooler Supabase para evitar "permission denied for database postgres"; documentação do bucket Storage `tenant-assets` e mensagem de erro mais clara no upload.
 - `v2.5.0` - 2026-02-15 - Seção "Provisionamento de subdomínios (web-customer)": variáveis `PLATFORM_SUBDOMAIN_BASE_DOMAIN`, `PLATFORM_BASE_DOMAINS` e uso de Vercel DNS para criação automática de CNAME ao criar tenant; falhas de provisionamento não bloqueiam a criação do tenant.
 - `v2.4.0` - 2026-02-14 - Baseline reforçado com padrão automático de segurança para novas tabelas no Supabase (`RLS` + `FORCE RLS` + revoke para `anon`/`authenticated`).
 - `v2.3.0` - 2026-02-14 - Inclusão de baseline de segurança Supabase e automação de smoke test pós-deploy.

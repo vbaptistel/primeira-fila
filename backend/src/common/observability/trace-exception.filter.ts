@@ -1,4 +1,11 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from "@nestjs/common";
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger
+} from "@nestjs/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { randomUUID } from "node:crypto";
 
@@ -8,6 +15,8 @@ type RequestWithTrace = FastifyRequest & {
 
 @Catch()
 export class TraceExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(TraceExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost): void {
     if (host.getType() !== "http") {
       throw exception;
@@ -19,6 +28,13 @@ export class TraceExceptionFilter implements ExceptionFilter {
     const traceId = request.traceId ?? randomUUID();
 
     const status = this.resolveStatus(exception);
+    if (status === HttpStatus.INTERNAL_SERVER_ERROR && !(exception instanceof HttpException)) {
+      this.logger.error(
+        `Unhandled exception [${traceId}]: ${exception instanceof Error ? exception.message : String(exception)}`,
+        exception instanceof Error ? exception.stack : undefined
+      );
+    }
+
     const payload = this.resolvePayload(exception, status, traceId);
 
     response.header("x-request-id", traceId);

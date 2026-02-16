@@ -5,7 +5,10 @@ import { CustomDomainService } from "./custom-domain.service";
 import { SubdomainProvisioningService } from "./subdomain-provisioning.service";
 import { VercelApiClient } from "./vercel-api.client";
 
+import { StorageModule } from "../../infrastructure/storage/storage.module";
+
 @Module({
+  imports: [StorageModule],
   controllers: [TenancyBrandingController],
   providers: [
     { provide: VercelApiClient, useFactory: () => new VercelApiClient() },
@@ -15,4 +18,4 @@ import { VercelApiClient } from "./vercel-api.client";
   ],
   exports: [TenancyBrandingService, CustomDomainService]
 })
-export class TenancyBrandingModule {}
+export class TenancyBrandingModule { }

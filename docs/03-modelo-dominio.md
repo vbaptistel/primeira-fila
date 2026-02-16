@@ -18,9 +18,10 @@ O domínio precisa suportar evento em múltiplos dias, com N sessões por dia, e
 - Sem transferência de ingresso no MVP.
 
 ## Entidades Principais
-- `Tenant`: organizador, subdomínio e branding.
+- `Tenant`: organizador, subdomínio e branding. Campo opcional `maxUsers` (limite de usuários do tenant; default de config global). Ver Documento 18.
 - `CommercialPolicy`: versão de regras comerciais por tenant (taxas, janelas e motivos de reembolso).
-- `User`: perfil e escopo de acesso.
+- `User`: identidade no Supabase Auth; perfil e escopo de acesso (role, tenant_id) em app_metadata. No banco de domínio, espelho de membros por tenant: `TenantMember` (tenant_id, auth_user_id, role) para listagem e contagem (Documento 18).
+- `TenantMember`: associação usuário-tenant com role; espelho para leitura e limite; fonte de verdade de role/tenant_id permanece no Supabase Auth (app_metadata).
 - `Event`: agregador comercial do evento.
 - `EventDay`: data de ocorrência do evento.
 - `Session`: unidade vendável e checkável.
@@ -41,12 +42,14 @@ O domínio precisa suportar evento em múltiplos dias, com N sessões por dia, e
 - `CheckIn`: apenas um check-in aprovado por ticket.
 - `Order.idempotency_key`: única por escopo de criação de pedido.
 - `CommercialPolicy.version`: única por tenant.
+- `TenantMember`: único por (tenant_id, auth_user_id).
 
 ## Relacionamentos (visão ER simplificada)
 ```mermaid
 erDiagram
   TENANT ||--o{ EVENT : owns
-  TENANT ||--o{ USER : scopes
+  TENANT ||--o{ TENANT_MEMBER : has
+  TENANT ||--o{ USER : "scopes (via app_metadata)"
   EVENT ||--o{ EVENT_DAY : has
   EVENT_DAY ||--o{ SESSION : has
   SESSION ||--o{ SESSION_SEAT : has
@@ -109,6 +112,7 @@ stateDiagram-v2
 - Evolução futura para preço por setor/assento exigirá extensão de modelo.
 
 ## Changelog
+- `v1.3.0` - 2026-02-15 - Tenant com campo opcional maxUsers; TenantMember para espelho de usuários por tenant (listagem e limite); User esclarecido como identidade no Supabase Auth com escopo em app_metadata. Documento 18.
 - `v1.2.0` - 2026-02-14 - Inclusão de política comercial versionada e snapshot financeiro no domínio.
 - `v1.1.0` - 2026-02-14 - Inclusão de chaves/restrições e regras finas de ciclo de vida.
 - `v1.0.0` - 2026-02-14 - Versão inicial revisada.

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, DefaultValuePipe, Get, Headers, HttpCode, HttpStatus, Param, ParseIntPipe, ParseUUIDPipe, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { FastifyRequest } from "fastify";
 import { AuthPrincipal } from "../../common/auth/auth.types";
@@ -55,6 +55,26 @@ export class OrdersController {
   @HttpCode(HttpStatus.OK)
   requestOrderAccess(@Body() dto: RequestOrderAccessDto) {
     return this.ordersService.requestOrderAccess(dto.email);
+  }
+}
+
+@ApiTags("orders-admin")
+@UseGuards(TenantRbacGuard)
+@TenantRoles("organizer_admin", "platform_admin")
+@Controller("tenants/:tenantId/orders")
+export class OrdersAdminController {
+  constructor(private readonly ordersService: OrdersService) {}
+
+  @Get()
+  listTenantOrders(
+    @Param("tenantId", ParseUUIDPipe) tenantId: string,
+    @Query("status") status?: string,
+    @Query("eventId") eventId?: string,
+    @Query("sessionId") sessionId?: string,
+    @Query("limit", new DefaultValuePipe(50), ParseIntPipe) limit?: number,
+    @Query("offset", new DefaultValuePipe(0), ParseIntPipe) offset?: number
+  ) {
+    return this.ordersService.listTenantOrders(tenantId, { status, eventId, sessionId, limit, offset });
   }
 }
 

@@ -1,4 +1,6 @@
+
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,17 +13,19 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards
 } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
-import { TenantRbacGuard } from "../../common/auth/tenant-rbac.guard";
+import { FastifyRequest } from "fastify";
 import { TenantRoles } from "../../common/auth/roles.decorator";
+import { TenantRbacGuard } from "../../common/auth/tenant-rbac.guard";
 import { parseHostForTenant } from "../../common/tenancy/tenant-resolver.utils";
-import { TenancyBrandingService } from "./tenancy-branding.service";
 import { CustomDomainService } from "./custom-domain.service";
 import { CreateTenantDto } from "./dto/create-tenant.dto";
-import { UpdateTenantDto } from "./dto/update-tenant.dto";
 import { SetCustomDomainDto } from "./dto/set-custom-domain.dto";
+import { UpdateTenantDto } from "./dto/update-tenant.dto";
+import { TenancyBrandingService } from "./tenancy-branding.service";
 
 @ApiTags("tenancy-branding")
 @Controller()
@@ -29,7 +33,7 @@ export class TenancyBrandingController {
   constructor(
     private readonly tenancyBrandingService: TenancyBrandingService,
     private readonly customDomainService: CustomDomainService
-  ) {}
+  ) { }
 
   // --- Rotas autenticadas (backoffice) ---
 
@@ -58,6 +62,36 @@ export class TenancyBrandingController {
   ) {
     const tenant = await this.tenancyBrandingService.updateTenant(tenantId, dto);
     return this.tenancyBrandingService.toOutput(tenant);
+  }
+
+  @Post("tenants/:tenantId/upload/logo")
+  @UseGuards(TenantRbacGuard)
+  @TenantRoles("organizer_admin", "platform_admin")
+  async uploadLogo(
+    @Param("tenantId", ParseUUIDPipe) tenantId: string,
+    @Req() req: FastifyRequest
+  ) {
+    const file = await (req as any).file();
+    if (!file) {
+      throw new BadRequestException("File is required");
+    }
+    const buffer = await file.toBuffer();
+    return this.tenancyBrandingService.uploadLogo(tenantId, buffer, file.mimetype);
+  }
+
+  @Post("tenants/:tenantId/upload/favicon")
+  @UseGuards(TenantRbacGuard)
+  @TenantRoles("organizer_admin", "platform_admin")
+  async uploadFavicon(
+    @Param("tenantId", ParseUUIDPipe) tenantId: string,
+    @Req() req: FastifyRequest
+  ) {
+    const file = await (req as any).file();
+    if (!file) {
+      throw new BadRequestException("File is required");
+    }
+    const buffer = await file.toBuffer();
+    return this.tenancyBrandingService.uploadFavicon(tenantId, buffer, file.mimetype);
   }
 
   // --- Custom domain ---

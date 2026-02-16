@@ -76,6 +76,10 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 | GET | `/v1/orders/{order_id}/tickets` | Sim | Buyer/Admin do escopo |
 | POST | `/v1/checkins/validate-qr` | Sim | Operator/Admin |
 | POST | `/v1/orders/{order_id}/refunds` | Sim | Organizer/Admin |
+| GET | `/v1/tenants` | Sim | platform_admin |
+| POST | `/v1/tenants/{tenant_id}/users` | Sim | platform_admin ou organizer_admin (próprio tenant) |
+| GET | `/v1/tenants/{tenant_id}/users` | Sim | platform_admin ou organizer_admin (próprio tenant) |
+| PATCH | `/v1/tenants/{tenant_id}/users/{user_id}` | Sim | platform_admin ou organizer_admin (próprio tenant), opcional no MVP |
 
 ### Endpoints de Catálogo (Organizer/Admin)
 - `EventDay`:
@@ -178,10 +182,18 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Deduplicar por `provider_event_id`.
 - Responder de forma idempotente.
 
+### Gestão de usuários por tenant (Documento 18)
+- **Listar tenants:** `GET /v1/tenants` — paginação cursor-based; apenas platform_admin.
+- **Criar usuário do tenant:** `POST /v1/tenants/{tenant_id}/users` — body: `email`, `password`, `role` (organizer_admin ou operator). platform_admin em qualquer tenant; organizer_admin apenas no próprio tenant. Validação de limite (maxUsers por tenant ou default global). Resposta 201 com id, email, role; 400 se limite excedido ou role inválido; 403 se organizer_admin em outro tenant.
+- **Listar usuários do tenant:** `GET /v1/tenants/{tenant_id}/users` — retorna lista de usuários do tenant (role, id, email). Fonte: tabela tenant_members ou Supabase filtrado.
+- **Atualizar role (opcional):** `PATCH /v1/tenants/{tenant_id}/users/{user_id}` — body: `role`. Regras de permissão conforme Documento 18.
+
 ## Códigos de Erro Recomendados
 - `AUTH_INVALID_TOKEN`
 - `AUTH_FORBIDDEN`
 - `TENANT_SCOPE_VIOLATION`
+- `USER_LIMIT_EXCEEDED` (limite de usuários do tenant excedido)
+- `USER_ALREADY_EXISTS` (email já cadastrado no tenant/Supabase)
 - `INVENTORY_UNAVAILABLE`
 - `HOLD_EXPIRED`
 - `ORDER_INVALID_STATE`
@@ -205,6 +217,7 @@ API REST/JSON sob `/v1`, com escopo multi-tenant e foco em operações de venda,
 - Evolução para multi-gateway exigirá contrato adicional de roteamento.
 
 ## Changelog
+- `v1.12.0` - 2026-02-15 - Onboarding e gestão de usuários (Documento 18): endpoints `GET /v1/tenants`, `POST /v1/tenants/{tenant_id}/users`, `GET /v1/tenants/{tenant_id}/users`, `PATCH /v1/tenants/{tenant_id}/users/{user_id}` (opcional); códigos de erro `USER_LIMIT_EXCEEDED`, `USER_ALREADY_EXISTS`; RBAC platform_admin e organizer_admin (próprio tenant).
 - `v1.11.0` - 2026-02-15 - Autenticação: escopo de login/refresh/logout no MVP apenas para backoffice; comprador acessa pedidos/ingressos via magic link (token + e-mail), sem JWT; RBAC do buyer esclarecido.
 - `v1.10.0` - 2026-02-14 - Inclusão do endpoint `POST /v1/tenants/{tenant_id}/commercial-policy/versions` para versionamento de política por tenant.
 - `v1.9.0` - 2026-02-14 - Contrato de `POST /v1/orders/{order_id}/payments` detalhado com `Idempotency-Key`, método de pagamento e regra de confirmação síncrona aprovado/negado no MVP.

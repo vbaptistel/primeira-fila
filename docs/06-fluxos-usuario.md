@@ -135,6 +135,36 @@ Reembolso finalizado e estados consistentes.
 - Solicitação fora da janela de cancelamento por iniciativa do comprador.
 - Reembolso integral obrigatório por cancelamento do evento.
 
+## Jornada 6 - Onboarding de tenant e gestão de usuários (Documento 18)
+### Atores
+Platform Admin, Organizer Admin, Sistema.
+
+### Pré-condições
+- Platform_admin autenticado para criar tenant e primeiro usuário.
+- Organizer_admin autenticado para adicionar usuários ao próprio tenant (respeitando limite).
+
+### Passos (onboarding completo em dois passos)
+1. Platform_admin chama `POST /v1/tenants` com dados do tenant (nome, slug, subdomínio, branding).
+2. Sistema cria tenant no banco e provisiona subdomínio (quando configurado); retorna tenant.id.
+3. Platform_admin chama `POST /v1/tenants/:tenantId/users` com email, senha e role `organizer_admin`.
+4. Sistema valida limite (maxUsers do tenant ou default global), cria usuário no Supabase Auth com app_metadata (role, tenant_id) e registra em tenant_members.
+5. Novo usuário faz login no web-backoffice; JWT contém tenant_id e role; acessa dashboard do tenant.
+
+### Passos (organizer_admin adiciona usuário ao próprio tenant)
+1. Organizer_admin acessa tela "Usuários" no backoffice do tenant.
+2. Informa email, senha e role (operator ou organizer_admin).
+3. Sistema valida escopo (principal.tenantId === tenantId) e limite; cria usuário no Supabase e em tenant_members.
+4. Novo usuário pode fazer login e operar no escopo do tenant.
+
+### Pós-condições
+Tenant criado; usuários com role e tenant_id corretos no JWT; listagem de usuários do tenant disponível.
+
+### Exceções
+- Limite de usuários do tenant excedido (USER_LIMIT_EXCEEDED).
+- Email já cadastrado (USER_ALREADY_EXISTS).
+- Organizer_admin tentando criar usuário em outro tenant (403).
+- Tenant não encontrado ou inativo.
+
 ## Diagramas de Sequência
 ### Checkout: Hold -> Order -> Payment -> Ticket
 ```mermaid
@@ -196,6 +226,24 @@ sequenceDiagram
   API-->>AD: Resultado do reembolso
 ```
 
+### Onboarding de tenant (dois passos)
+```mermaid
+sequenceDiagram
+  participant PA as Platform Admin
+  participant API as Backend API
+  participant DB as Prisma
+  participant SA as Supabase Auth
+
+  PA->>API: POST /v1/tenants
+  API->>DB: create Tenant
+  API-->>PA: tenant.id
+  PA->>API: POST /v1/tenants/:tenantId/users (email, password, organizer_admin)
+  API->>DB: validar tenant e limite
+  API->>SA: admin.createUser(app_metadata: role, tenant_id)
+  API->>DB: insert tenant_members
+  API-->>PA: 201 user created
+```
+
 ## Regras e Critérios de Aceite
 - Todas as jornadas in-scope devem ter fluxo principal e exceções.
 - Exceções devem mapear para códigos de erro de API.
@@ -206,6 +254,7 @@ sequenceDiagram
 - Cancelamento por timeout pode elevar tickets de suporte financeiro.
 
 ## Changelog
+- `v1.5.0` - 2026-02-15 - Jornada 6: Onboarding de tenant e gestão de usuários (Documento 18). Dois passos (criar tenant, criar primeiro usuário); organizer_admin adiciona usuários ao próprio tenant; diagrama de sequência do onboarding.
 - `v1.4.0` - 2026-02-14 - Remoção de menções a execução paralela em envio de e-mail.
 - `v1.3.0` - 2026-02-14 - Ajuste de emissão para cenário sem reexecução automática de e-mail.
 - `v1.2.0` - 2026-02-14 - Alinhamento de jornada de reembolso à matriz comercial e motivos padronizados.

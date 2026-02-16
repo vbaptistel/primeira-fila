@@ -9,6 +9,7 @@ import { PrismaService } from "../../infrastructure/prisma/prisma.service";
 import { CreateTenantDto } from "./dto/create-tenant.dto";
 import { UpdateTenantDto } from "./dto/update-tenant.dto";
 import { SubdomainProvisioningService } from "./subdomain-provisioning.service";
+import { StorageService } from "../../infrastructure/storage/storage.service";
 
 type CacheEntry = {
   tenant: Tenant;
@@ -25,8 +26,9 @@ export class TenancyBrandingService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly subdomainProvisioning: SubdomainProvisioningService
-  ) {}
+    private readonly subdomainProvisioning: SubdomainProvisioningService,
+    private readonly storageService: StorageService
+  ) { }
 
   async createTenant(dto: CreateTenantDto): Promise<Tenant> {
     let tenant: Tenant;
@@ -222,5 +224,19 @@ export class TenancyBrandingService {
   private isPrismaErrorCode(error: unknown, code: string): boolean {
     if (typeof error !== "object" || error === null) return false;
     return "code" in error && (error as { code?: string }).code === code;
+  }
+
+  async uploadLogo(tenantId: string, file: Buffer, mimeType: string): Promise<Tenant> {
+    const url = await this.uploadFileToStorage(file, mimeType, `tenants/${tenantId}/logo`);
+    return this.updateTenant(tenantId, { logoUrl: url });
+  }
+
+  async uploadFavicon(tenantId: string, file: Buffer, mimeType: string): Promise<Tenant> {
+    const url = await this.uploadFileToStorage(file, mimeType, `tenants/${tenantId}/favicon`);
+    return this.updateTenant(tenantId, { faviconUrl: url });
+  }
+
+  private async uploadFileToStorage(file: Buffer, mimeType: string, folder: string): Promise<string> {
+    return this.storageService.uploadFile(file, mimeType, folder);
   }
 }

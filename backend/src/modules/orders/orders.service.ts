@@ -46,6 +46,56 @@ export class OrdersService {
     private readonly magicLinkTokenService: MagicLinkTokenService
   ) {}
 
+  async listTenantOrders(
+    tenantId: string,
+    filters: {
+      status?: string;
+      eventId?: string;
+      sessionId?: string;
+      limit?: number;
+      offset?: number;
+    }
+  ) {
+    const where: Prisma.OrderWhereInput = { tenantId };
+
+    if (filters.status) {
+      where.status = filters.status as OrderStatus;
+    }
+
+    if (filters.sessionId) {
+      where.sessionId = filters.sessionId;
+    } else if (filters.eventId) {
+      where.session = {
+        eventDay: {
+          eventId: filters.eventId
+        }
+      };
+    }
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        include: {
+          session: { select: { id: true, name: true, startsAt: true, endsAt: true } },
+          payments: { select: { id: true, status: true, method: true, amountCents: true, provider: true } },
+          items: {
+            select: {
+              id: true,
+              unitPriceCents: true,
+              seat: { select: { id: true, sectorCode: true, rowLabel: true, seatNumber: true } }
+            }
+          }
+        },
+        orderBy: { createdAt: "desc" },
+        take: filters.limit ?? 50,
+        skip: filters.offset ?? 0
+      }),
+      this.prisma.order.count({ where })
+    ]);
+
+    return { data: orders, total };
+  }
+
   async createOrder(idempotencyKeyHeader: string | undefined, dto: CreateOrderDto) {
     const idempotencyKey = this.normalizeIdempotencyKey(idempotencyKeyHeader);
     const requestHash = this.buildRequestHash(dto);

@@ -37,8 +37,9 @@ docs/
   - navegação pública de eventos;
   - checkout e consulta de pedido/ingresso do comprador.
 - `frontend/apps/web-backoffice`:
-  - gestão de tenant, eventos, sessões e assentos;
-  - operação de check-in e reembolso manual.
+  - gestão de tenant (no escopo do tenant do usuário), eventos, sessões e assentos;
+  - operação de check-in, reembolso manual e gestão de usuários do tenant (Documento 18).
+- Frontend dedicado à plataforma (ex.: `web-platform`) para platform_admin: **previsto para fase posterior** (Documento 18). Até lá, operações de platform_admin (listar tenants, criar tenant, criar primeiro usuário) via API ou script.
 - `backend/src/modules`:
   - API REST `/v1`;
   - regras transacionais, autenticação e autorização;
@@ -80,6 +81,7 @@ docs/
 - Falta de contrato OpenAPI bem versionado pode quebrar integração sem compartilhamento de código.
 
 ## Changelog
+- `v2.1.0` - 2026-02-15 - Web-backoffice: gestão de usuários do tenant (Doc 18). Previsão de frontend dedicado à plataforma (web-platform) para fase posterior.
 - `v2.0.0` - 2026-02-14 - Ajuste para backend único em modo síncrono e estrutura final de frontend compartilhado.
 - `v1.1.0` - 2026-02-14 - Separação backend/frontend com backend único e pacote compartilhado exclusivo de frontend.
 - `v1.0.0` - 2026-02-14 - Definição inicial da divisão de aplicações e monorepo.

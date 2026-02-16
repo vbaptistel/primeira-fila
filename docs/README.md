@@ -23,6 +23,8 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 14. `docs/14-deploy-backend-vercel.md`
 15. `docs/15-estorias-mvp.md`
 16. `docs/16-tasks-implementacao-mvp.md`
+17. `docs/17-tenant-image-upload.md`
+18. `docs/18-onboarding-tenant-usuarios.md`
 
 ## Complementos Técnicos
 - ADRs: `docs/adr/README.md`
@@ -61,6 +63,7 @@ Projeto white-label de venda de ingressos para organizadores no Brasil, com foco
 - Integrações externas podem exigir refinamentos de contrato.
 
 ## Changelog
+- `v3.10.0` - 2026-02-15 - Documento 18 (onboarding de tenant e gestão de usuários): decisões, limite por tenant, tenant_members, endpoints e fluxo; frontend de plataforma adiado. Sumário atualizado com docs 17 e 18. Documentação transversal (03, 05, 06, 16) e tasks/sprint 09 atualizadas.
 - `v3.9.0` - 2026-02-14 - Conclusão da Sprint 03 no backend com RBAC por tenant (Supabase Auth), políticas comerciais versionadas com default automático por tenant e logs estruturados com `trace_id`.
 - `v3.8.0` - 2026-02-14 - Avanço da Sprint 04 com conclusão da `TASK-010` (integração de pagamento no backend com idempotência e confirmação síncrona aprovado/negado).
 - `v3.7.0` - 2026-02-14 - Avanço da Sprint 04 com conclusão da `TASK-009` (criação de pedido com idempotência e snapshot financeiro no backend).
