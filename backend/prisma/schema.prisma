@@ -6,23 +6,30 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["primeira-fila"]
 }
 
 enum EventStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
+
+  @@schema("primeira-fila")
 }
 
 enum EventDayStatus {
   ACTIVE
   CANCELLED
+
+  @@schema("primeira-fila")
 }
 
 enum SessionStatus {
   DRAFT
   PUBLISHED
   CANCELLED
+
+  @@schema("primeira-fila")
 }
 
 enum SessionSeatStatus {
@@ -30,6 +37,8 @@ enum SessionSeatStatus {
   HELD
   SOLD
   BLOCKED
+
+  @@schema("primeira-fila")
 }
 
 enum SessionHoldStatus {
@@ -37,6 +46,8 @@ enum SessionHoldStatus {
   EXPIRED
   CONSUMED
   CANCELLED
+
+  @@schema("primeira-fila")
 }
 
 enum OrderStatus {
@@ -44,6 +55,8 @@ enum OrderStatus {
   PAID
   EXPIRED
   CANCELLED
+
+  @@schema("primeira-fila")
 }
 
 enum PaymentStatus {
@@ -52,24 +65,32 @@ enum PaymentStatus {
   DENIED
   REFUNDED
   ERROR
+
+  @@schema("primeira-fila")
 }
 
 enum PaymentMethod {
   PIX
   CREDIT_CARD
   DEBIT_CARD
+
+  @@schema("primeira-fila")
 }
 
 enum TicketStatus {
   VALID
   USED
   CANCELLED
+
+  @@schema("primeira-fila")
 }
 
 enum RefundStatus {
   REQUESTED
   APPROVED
   DENIED
+
+  @@schema("primeira-fila")
 }
 
 enum AuditAction {
@@ -77,12 +98,16 @@ enum AuditAction {
   REFUND_REQUESTED
   REFUND_APPROVED
   REFUND_DENIED
+
+  @@schema("primeira-fila")
 }
 
 enum EmailStatus {
   SENT
   FAILED
   PENDING
+
+  @@schema("primeira-fila")
 }
 
 enum CustomDomainStatus {
@@ -90,6 +115,8 @@ enum CustomDomainStatus {
   VERIFIED
   FAILED
   REMOVED
+
+  @@schema("primeira-fila")
 }
 
 model Tenant {
@@ -116,7 +143,7 @@ model Tenant {
   updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   commercialPolicies CommercialPolicy[]
-  tenantMembers       TenantMember[]
+  tenantMembers      TenantMember[]
   events             Event[]
   eventDays          EventDay[]
   sessions           Session[]
@@ -130,6 +157,7 @@ model Tenant {
   emailLogs          EmailLog[]
 
   @@map("tenants")
+  @@schema("primeira-fila")
 }
 
 model TenantMember {
@@ -145,25 +173,27 @@ model TenantMember {
   @@unique([tenantId, authUserId])
   @@index([tenantId])
   @@map("tenant_members")
+  @@schema("primeira-fila")
 }
 
 model CommercialPolicy {
-  id                  String   @id @default(uuid()) @db.Uuid
-  tenantId            String   @map("tenant_id") @db.Uuid
-  tenant              Tenant   @relation(fields: [tenantId], references: [id])
-  version             String   @db.VarChar(80)
-  isPlatformDefault   Boolean  @default(false) @map("is_platform_default")
-  serviceFeePercentBps Int     @map("service_fee_percent_bps")
-  serviceFeeFixedCents Int     @map("service_fee_fixed_cents")
-  currencyCode        String   @default("BRL") @map("currency_code") @db.VarChar(3)
-  timezone            String   @default("America/Sao_Paulo") @db.VarChar(64)
-  effectiveFrom       DateTime @map("effective_from") @db.Timestamptz(6)
-  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                   String   @id @default(uuid()) @db.Uuid
+  tenantId             String   @map("tenant_id") @db.Uuid
+  tenant               Tenant   @relation(fields: [tenantId], references: [id])
+  version              String   @db.VarChar(80)
+  isPlatformDefault    Boolean  @default(false) @map("is_platform_default")
+  serviceFeePercentBps Int      @map("service_fee_percent_bps")
+  serviceFeeFixedCents Int      @map("service_fee_fixed_cents")
+  currencyCode         String   @default("BRL") @map("currency_code") @db.VarChar(3)
+  timezone             String   @default("America/Sao_Paulo") @db.VarChar(64)
+  effectiveFrom        DateTime @map("effective_from") @db.Timestamptz(6)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@unique([tenantId, version])
   @@index([tenantId, effectiveFrom])
   @@map("commercial_policies")
+  @@schema("primeira-fila")
 }
 
 model Event {
@@ -183,6 +213,7 @@ model Event {
   @@unique([tenantId, slug])
   @@index([tenantId, status])
   @@map("events")
+  @@schema("primeira-fila")
 }
 
 model EventDay {
@@ -201,6 +232,7 @@ model EventDay {
   @@unique([id, eventId])
   @@index([tenantId, eventId])
   @@map("event_days")
+  @@schema("primeira-fila")
 }
 
 model Session {
@@ -232,6 +264,7 @@ model Session {
   @@index([tenantId, status])
   @@index([eventId, eventDayId])
   @@map("sessions")
+  @@schema("primeira-fila")
 }
 
 model SessionSeat {
@@ -253,36 +286,39 @@ model SessionSeat {
   @@unique([sessionId, sectorCode, rowLabel, seatNumber])
   @@index([tenantId, sessionId, status])
   @@map("session_seats")
+  @@schema("primeira-fila")
 }
 
 model SessionHold {
-  id          String            @id @default(uuid()) @db.Uuid
-  tenantId    String            @map("tenant_id") @db.Uuid
-  tenant      Tenant            @relation(fields: [tenantId], references: [id])
-  sessionId   String            @map("session_id") @db.Uuid
-  status      SessionHoldStatus @default(ACTIVE)
-  expiresAt   DateTime          @map("expires_at") @db.Timestamptz(6)
-  session     Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  heldSeats   SessionHoldSeat[]
-  order       Order?
-  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id        String            @id @default(uuid()) @db.Uuid
+  tenantId  String            @map("tenant_id") @db.Uuid
+  tenant    Tenant            @relation(fields: [tenantId], references: [id])
+  sessionId String            @map("session_id") @db.Uuid
+  status    SessionHoldStatus @default(ACTIVE)
+  expiresAt DateTime          @map("expires_at") @db.Timestamptz(6)
+  session   Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  heldSeats SessionHoldSeat[]
+  order     Order?
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([tenantId, sessionId, status, expiresAt])
   @@map("session_holds")
+  @@schema("primeira-fila")
 }
 
 model SessionHoldSeat {
-  id         String      @id @default(uuid()) @db.Uuid
-  holdId     String      @map("hold_id") @db.Uuid
-  seatId     String      @map("seat_id") @db.Uuid
-  hold       SessionHold @relation(fields: [holdId], references: [id], onDelete: Cascade)
-  seat       SessionSeat @relation(fields: [seatId], references: [id], onDelete: Cascade)
-  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  id        String      @id @default(uuid()) @db.Uuid
+  holdId    String      @map("hold_id") @db.Uuid
+  seatId    String      @map("seat_id") @db.Uuid
+  hold      SessionHold @relation(fields: [holdId], references: [id], onDelete: Cascade)
+  seat      SessionSeat @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([holdId, seatId])
   @@index([seatId])
   @@map("session_hold_seats")
+  @@schema("primeira-fila")
 }
 
 model Order {
@@ -315,6 +351,7 @@ model Order {
   @@index([tenantId, status])
   @@index([sessionId, status])
   @@map("orders")
+  @@schema("primeira-fila")
 }
 
 model Payment {
@@ -341,24 +378,26 @@ model Payment {
   @@index([tenantId, orderId, status])
   @@index([orderId, status])
   @@map("payments")
+  @@schema("primeira-fila")
 }
 
 model OrderItem {
-  id             String   @id @default(uuid()) @db.Uuid
-  orderId        String   @map("order_id") @db.Uuid
-  sessionId      String   @map("session_id") @db.Uuid
-  seatId         String   @map("seat_id") @db.Uuid
-  unitPriceCents Int      @map("unit_price_cents")
-  currencyCode   String   @map("currency_code") @db.VarChar(3)
-  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  session        Session  @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  id             String      @id @default(uuid()) @db.Uuid
+  orderId        String      @map("order_id") @db.Uuid
+  sessionId      String      @map("session_id") @db.Uuid
+  seatId         String      @map("seat_id") @db.Uuid
+  unitPriceCents Int         @map("unit_price_cents")
+  currencyCode   String      @map("currency_code") @db.VarChar(3)
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  session        Session     @relation(fields: [sessionId], references: [id], onDelete: Restrict)
   seat           SessionSeat @relation(fields: [seatId], references: [id], onDelete: Restrict)
   ticket         Ticket?
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([orderId, seatId])
   @@index([sessionId, seatId])
   @@map("order_items")
+  @@schema("primeira-fila")
 }
 
 model Ticket {
@@ -382,28 +421,30 @@ model Ticket {
   @@index([tenantId, orderId])
   @@index([orderId, status])
   @@map("tickets")
+  @@schema("primeira-fila")
 }
 
 model Refund {
-  id                 String       @id @default(uuid()) @db.Uuid
-  tenantId           String       @map("tenant_id") @db.Uuid
-  tenant             Tenant       @relation(fields: [tenantId], references: [id])
-  orderId            String       @map("order_id") @db.Uuid
-  paymentId          String       @map("payment_id") @db.Uuid
-  reasonCode         String       @map("reason_code") @db.VarChar(60)
-  reasonDescription  String?      @map("reason_description") @db.VarChar(500)
-  amountCents        Int          @map("amount_cents")
-  status             RefundStatus @default(REQUESTED)
-  requestedBy        String       @map("requested_by") @db.Uuid
-  processedAt        DateTime?    @map("processed_at") @db.Timestamptz(6)
-  order              Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  payment            Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                String       @id @default(uuid()) @db.Uuid
+  tenantId          String       @map("tenant_id") @db.Uuid
+  tenant            Tenant       @relation(fields: [tenantId], references: [id])
+  orderId           String       @map("order_id") @db.Uuid
+  paymentId         String       @map("payment_id") @db.Uuid
+  reasonCode        String       @map("reason_code") @db.VarChar(60)
+  reasonDescription String?      @map("reason_description") @db.VarChar(500)
+  amountCents       Int          @map("amount_cents")
+  status            RefundStatus @default(REQUESTED)
+  requestedBy       String       @map("requested_by") @db.Uuid
+  processedAt       DateTime?    @map("processed_at") @db.Timestamptz(6)
+  order             Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment           Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([tenantId, orderId])
   @@index([orderId, status])
   @@map("refunds")
+  @@schema("primeira-fila")
 }
 
 model AuditLog {
@@ -420,23 +461,25 @@ model AuditLog {
   @@index([tenantId, action])
   @@index([resourceType, resourceId])
   @@map("audit_logs")
+  @@schema("primeira-fila")
 }
 
 model EmailLog {
-  id               String      @id @default(uuid()) @db.Uuid
-  tenantId         String      @map("tenant_id") @db.Uuid
-  tenant           Tenant      @relation(fields: [tenantId], references: [id])
-  orderId          String?     @map("order_id") @db.Uuid
-  to               String      @db.VarChar(180)
-  subject          String      @db.VarChar(255)
-  templateName     String      @map("template_name") @db.VarChar(80)
-  status           EmailStatus @default(PENDING)
-  errorMessage     String?     @map("error_message") @db.VarChar(500)
-  resendMessageId  String?     @map("resend_message_id") @db.VarChar(80)
-  sentAt           DateTime?   @map("sent_at") @db.Timestamptz(6)
-  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @map("tenant_id") @db.Uuid
+  tenant          Tenant      @relation(fields: [tenantId], references: [id])
+  orderId         String?     @map("order_id") @db.Uuid
+  to              String      @db.VarChar(180)
+  subject         String      @db.VarChar(255)
+  templateName    String      @map("template_name") @db.VarChar(80)
+  status          EmailStatus @default(PENDING)
+  errorMessage    String?     @map("error_message") @db.VarChar(500)
+  resendMessageId String?     @map("resend_message_id") @db.VarChar(80)
+  sentAt          DateTime?   @map("sent_at") @db.Timestamptz(6)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([tenantId, status])
   @@index([orderId])
   @@map("email_logs")
+  @@schema("primeira-fila")
 }

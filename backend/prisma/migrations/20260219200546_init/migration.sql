@@ -48,6 +48,7 @@ CREATE TABLE "tenants" (
     "primary_color" VARCHAR(9) NOT NULL DEFAULT '#000000',
     "secondary_color" VARCHAR(9) NOT NULL DEFAULT '#FFFFFF',
     "accent_color" VARCHAR(9) NOT NULL DEFAULT '#3B82F6',
+    "color_scheme" VARCHAR(10) NOT NULL DEFAULT 'light',
     "footer_text" VARCHAR(500),
     "terms_url" VARCHAR(500),
     "privacy_url" VARCHAR(500),
@@ -56,10 +57,24 @@ CREATE TABLE "tenants" (
     "custom_domain" VARCHAR(255),
     "custom_domain_status" "CustomDomainStatus",
     "custom_domain_verified_at" TIMESTAMPTZ(6),
+    "max_users" INTEGER,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
 
     CONSTRAINT "tenants_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "tenant_members" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "auth_user_id" UUID NOT NULL,
+    "email" VARCHAR(180) NOT NULL,
+    "display_name" VARCHAR(160),
+    "role" VARCHAR(32) NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "tenant_members_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -301,6 +316,12 @@ CREATE UNIQUE INDEX "tenants_subdomain_key" ON "tenants"("subdomain");
 CREATE UNIQUE INDEX "tenants_custom_domain_key" ON "tenants"("custom_domain");
 
 -- CreateIndex
+CREATE INDEX "tenant_members_tenant_id_idx" ON "tenant_members"("tenant_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tenant_members_tenant_id_auth_user_id_key" ON "tenant_members"("tenant_id", "auth_user_id");
+
+-- CreateIndex
 CREATE INDEX "commercial_policies_tenant_id_effective_from_idx" ON "commercial_policies"("tenant_id", "effective_from");
 
 -- CreateIndex
@@ -404,6 +425,9 @@ CREATE INDEX "email_logs_tenant_id_status_idx" ON "email_logs"("tenant_id", "sta
 
 -- CreateIndex
 CREATE INDEX "email_logs_order_id_idx" ON "email_logs"("order_id");
+
+-- AddForeignKey
+ALTER TABLE "tenant_members" ADD CONSTRAINT "tenant_members_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "commercial_policies" ADD CONSTRAINT "commercial_policies_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
